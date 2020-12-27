@@ -1,0 +1,74 @@
+{
+	"BLANK":
+	{
+		"Character": 32,
+		"Color": [0, 255, 0],
+		"Blocked": true
+	},
+	"FLOOR":
+	{
+		"Character": 46,
+		"Color": [0, 255, 0],
+		"Blocked": false
+	},
+	"HALL":
+	{
+		"Character": 9617,
+		"Color": [0, 255, 0],
+		"Blocked": false
+	},
+	"DOOR_CLOSED":
+	{
+		"Character": 43,
+		"Color": [0, 255, 0],
+		"Blocked": true
+	},
+	"DOOR_OPEN":
+	{
+		"Character": 45,
+		"Color": [0, 255, 0],
+		"Blocked": false
+	},
+	"WALL_HORIZ":
+	{
+		"Character": 9472,
+		"Color": [0, 255, 0],
+		"Blocked": true
+	},
+	"WALL_VERT":
+	{
+		"Character": 9474,
+		"Color": [0, 255, 0],
+		"Blocked": true
+	},
+	"WALL_COR_TL":
+	{
+		"Character": 9484,
+		"Color": [0, 255, 0],
+		"Blocked": true
+	},
+	"WALL_COR_TR":
+	{
+		"Character": 9488,
+		"Color": [0, 255, 0],
+		"Blocked": true
+	},
+	"WALL_COR_BL":
+	{
+		"Character": 9492,
+		"Color": [0, 255, 0],
+		"Blocked": true
+	},
+	"WALL_COR_BR":
+	{
+		"Character": 9496,
+		"Color": [0, 255, 0],
+		"Blocked": true
+	},
+	"CORPSE":
+	{
+		"Character": 37,
+		"Color": [176, 172, 162],
+		"Blocked": false
+	}
+}

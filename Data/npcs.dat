@@ -1,0 +1,18 @@
+{
+	"MERC":
+	{
+		"Name": "Mercenary",
+		"Description": "A hired gun to put down dangerous intruders.",
+		"Race": "Human",
+		"Class": "Gunslinger",
+		"Muscle": 12,
+		"Reflexes": 18,
+		"Grit": 14,
+		"Smarts": 10,
+		"Charm": 8,
+		"Wits": 11,
+		"Graphic": "M",
+		"Color": [255, 255, 0],
+		"AI": "smart_melee"
+	}
+}

@@ -1,0 +1,147 @@
+High-Rise: Low-Lives
+====================
+Background: It is the year 21XX, and corporations have grown in power. After selling most public lands to pay off debt, the US government has lost most of it's control of land and resources. Inadvertently, the corporations have grown exponentially more powerful with the control of land and resources. With their new power, the corporations continued to expand bullying individuals and local governments off private land for further control of resources. Now, nearly all land in the US is controlled by corporations for the purpose of resource extraction and manufacturing. With the US government now virtually powerless, it lost its ability to enforce laws. Thus, one corporation came to be so powerful that it now controls 98% of all business and land in the country, and is essentially the de-facto ruler of America. Due to most land being controlled for resource extraction, the human population has been condensed into three mega-cities which also makes them easier to control.
+
+Concept: In the future an evil megacorp has taken over the world. Technology has improved exponentially while living conditions continue to suffer. You have been hired by a rival to enter the headquarters of this evil megacorp, knwon as the High-Rise, a giant looming building located in the heart of the megacity, in order to reach the top floor and find a way to retrieve a piece of mysterious tech.
+
+Megacorp: Ruled by an industrious young woman, the past several years she disappeared from the public eye and has become a mystery. Some say she is dead others say she controls things from the shadows. The reality is she has been searching for a way to transcend the human body and become one with cyberspace using her vast wealth and connections in order to maintain full control of humanity for eternity.
+
+Gameplay-features:
+*Turn-based (explained by implant/drug that allows exponential thought speed essentially slowing time to a stand-still).
+*Randomly generated.
+*Perma-death.
+*Auto-explore feature.
+*Must continuously recharge self by finding power cells (like food in other roguelikes).
+*Ranged combat with firearms.
+*Melee combat with high-tech melee weapons.
+*"Spell"-casting explained by modification of source-code of reality.
+*"Spells" are instead programs.
+*Stealth combat.
+*Computers can be hacked for various purposes: unlock doors, download programs, turn off security measures, cause explosions, view security cameras.
+*Traps, such as security cameras notifying guards and sounding alarms.
+*Traps can be hacked, destroyed, or sneaked by.
+*Vents can be used to sneak around enemies and access locked areas.
+*"Enchanted" gear can be found in the form of high-tech gear. Gear can also be "enchanted" through programming.
+*Drugs are consumed in lieu of potions for various effects.
+*Robotic or cybernetic enemies can be sabotaged for short durations for various effects (as can the player).
+*Mental (if machine mind) and physical (if machine body) augmentations can be found to improve performance.
+*Intelligent enemies can be made neutral or even friendly with charisma.
+*Cover system for ranged combat (different things provide different levels of cover).
+*Can sabotage light sources and other electronics.
+*Some enemies patrol while others guard a certain area. Can also change behavior in regards to events.
+*Passwords and keys can sometimes be found to unlock terminals and doors.
+*Some enemies can be bribed or hired.
+*Simple time travel mechanic through technomancy.
+*Different floor themes like residential area full of gang members and other criminals.
+
+Races:
+Human: Completely natural, unable to be augmented but no need to charge.
+Cyborg: Human mind with a mostly mechanical body. Can augment body. Needs to charge occasionally.
+Android: Machine mind with mostly human body. Can augment mind. Needs to charge occasionally.
+Robot: Machine in both mind and body, thus can augment both. Needs to charge frequently.
+
+Classes:
+Gunslinger: Skilled in guns and light armor.
+Brawler: Likes to fight up-close with melee weapons and heavy armor.
+Infiltrator: Prefers stealth and subterfuge. Good at sneaking, lockpicking, and knives.
+Technomancer: Skilled at modifying reality's source code to create real-world effects.
+Custom
+
+Attributes:
+Muscle
+Reflexes
+Smarts
+Charm
+Grit
+Wits
+
+Skills:
+*Offense:
+Guns
+Melee
+Explosives
+*Defense:
+Heavy Armor
+Light Armor
+Dodging
+*Subterfuge:
+Hacking
+Lockpicking
+Sneak
+Pickpocket
+*Technomancy:
+Destruction
+Manipulation
+Creation
+
+Stats:
+Health
+Charge
+Armor Class
+Technomancy device charge
+
+Enemies (Called "drones" since they all serve the megacorp):
+Rent-a-cop
+Robots
+Deranged Robots
+Mercs
+Dominated minds (essentially mindless servants)
+Mutants (bioengineering pursued before augmentation, created monstrosities)
+Aliens
+Bounty hunters
+Black hats
+Ghosts (stealthy cyborgs)
+Holograms (act like traditional ghosts in that they can drain power)
+Guard dogs
+Turrets
+Mad Scientist
+Gang members
+Criminals
+
+Neutral NPCs:
+Fixer (sells items for cigarettes)
+Office Drone
+Virtual Intelligence
+Suit (business exec)
+Scientist
+
+Weapons:
+Handguns
+Rifles
+Shotguns
+Machineguns
+Knives
+Swords
+Clubs/Batons
+Tasers
+Pepper spray
+
+Armor:
+Leather
+Kevlar
+Metal
+
+Currency: Cigarettes (after refusing to be bought out, the tobacco industry was ultimately destroyed by megacorp after crops were burned. thus, no new cigarettes are manufactured and have become a rare commodity amongst the underworld)
+
+Drugs: Mostly randomly generated effects.
+
+Implants (Body Augments): Mostly randomly generated strong effects. Some unique named ones.
+
+Programs (Mind Augments): Mostly randomly generated strong effects. Some unique named ones.
+
+Technomancy spells (name TBD):
+Possess (take over organic mind)
+Tychokinesis
+
+Traps:
+Alarm
+Power drain
+Shock
+Lasers
+
+Cool References:
+Blade Runner: Deckard's gun, blade runner NPC
+Snow Crash: Reason gun, character references, snow crash drug
+Deus ex: Nano vs mechanical augments, character references
+The Matrix: character references, 
+
