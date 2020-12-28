@@ -1,25 +1,14 @@
 import entity
-import globals
-
-
-# Returns the Item entities at a given position
-def get_items_at(x, y):
-    items_at_pos = []
-
-    for item_at_pos in globals.items:
-        if item_at_pos.x == x and item_at_pos.y == y:
-            items_at_pos.append(item_at_pos)
-
-    return items_at_pos
 
 
 class ItemEntity(entity.Entity):
     # ~~~ PRIVATE METHODS ~~~
 
-    def __init__(self, x, y, graphic, color, item):
-        super().__init__(x, y, graphic, color)
+    def __init__(self, x, y, graphic, color, item, game_entities):
+        super().__init__(x, y, False, graphic, color, game_entities)
         self.item = item
-        globals.items.append(self)
+        self.game_items = game_entities.items
+        game_entities.items.append(self)
 
     # ~~~ PUBLIC METHODS ~~~
 
@@ -30,8 +19,8 @@ class ItemEntity(entity.Entity):
         return self.item
 
     def remove(self):
-        for item in enumerate(globals.items):
+        for item in enumerate(self.game_items):
             if item[1] is self:
-                globals.entities.pop(item[0])
+                self.game_items.pop(item[0])
 
         super().remove()
