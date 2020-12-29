@@ -1,5 +1,4 @@
 import entity
-import globals
 import weapon
 import door
 from enum import Enum, auto
@@ -44,9 +43,15 @@ class Actor(entity.Entity):
         self.reflexes = reflexes
         self.wits = wits
         self.grit = grit
+        self.charm = 5
         self.base_atk_dmg = 10
 
+        self.mp = 50
+        self.charge = 100
+        self.ac = 6
+
         # Inventory and currently equipped stuff
+        self.MAX_INVENTORY_SIZE = 52
         self.inventory = []
         self.wielding = None
         self.wearing = None
@@ -59,6 +64,7 @@ class Actor(entity.Entity):
         self.wield_speed = 5
         self.gen_speed = 5  # For general actions such as opening doors.
         self.atk_dmg = self.base_atk_dmg
+        self.rest_speed = 10
 
         # How many turns it takes to recover some stats.
         self.recovery_rate = 10
@@ -76,7 +82,7 @@ class Actor(entity.Entity):
 
         # Set a default action. For now, just rest.
         if not is_player:
-            self.__set_action(self.Actions.REST, globals.REST_TIME)
+            self.__set_action(self.Actions.REST, self.rest_speed)
 
         game_entities.actors.append(self)
 
@@ -331,17 +337,17 @@ class Actor(entity.Entity):
 
     # Actor rests to recover HP and other stuff
     def attempt_rest(self):
-        self.__set_action(self.Actions.REST, globals.REST_TIME)
+        self.__set_action(self.Actions.REST, self.rest_speed)
 
     # Called every tick of game time.
-    def update(self):
+    def update(self, game_time):
         # If the actor is dead, show it as a passable corpse and do nothing
         if self.health <= 0:
             self.__play_dead()
             return
 
         # Check if time to recover
-        if globals.time > 0 and (globals.time % self.recovery_rate) == 0:
+        if game_time > 0 and (game_time % self.recovery_rate) == 0:
             self.__recover()
 
         # Only delay action if the actor has an action queued

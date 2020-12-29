@@ -1,5 +1,4 @@
 import tcod
-import globals
 
 
 class Interface:
@@ -62,20 +61,19 @@ class Interface:
             )
 
     class InventoryScreen:
-        def __init__(self, x, y, max_inventory_size):
+        def __init__(self, x, y):
             self.x = x
             self.y = y
-            self.max_inventory_size = max_inventory_size
 
-        def render(self, console, inventory):
+        def render(self, console, actor):
             console.print(
                 self.x,
                 self.y,
-                string=f"Inventory: {len(inventory)} / {self.max_inventory_size} slots",
+                string=f"Inventory: {len(actor.inventory)} / {actor.MAX_INVENTORY_SIZE} slots",
                 fg=tcod.green
             )
 
-            for item in enumerate(inventory):
+            for item in enumerate(actor.inventory):
                 # For smoother grammar
                 amount = item[1]["Amount"]
                 if amount == 1:
@@ -92,36 +90,26 @@ class Interface:
         # ~~~ PRIVATE METHODS ~~~
 
         def __init__(self, x, y, width, height):
-            # self.player = player
             self.x = x
             self.y = y
             self.width = width
             self.height = height
 
-            self.name = "Hiro"
-            self.race = "Human"
-            self.class_name = "Infiltrator"
-            self.hp = 100
-            self.mp = 50
-            self.charge = 100
-            self.ac = 6
-            self.muscle = 12
-            self.reflexes = 20
-            self.smarts = 12
-            self.charm = 11
-            self.grit = 111
-            self.wits = 15
-            self.wielding = None
-            self.wearing = "Street Gi"
+            # The actor whos stats appear here.
+            self.actor = None
+
             self.floor = 1
-            self.time = globals.time
+            self.time = 0
 
         # ~~~ PUBLIC METHODS ~~~
 
-        def update(self, hp, wielding, time):
-            self.hp = hp
+        # Sets the actor whos stats we want to show up.
+        def set_actor(self, actor):
+            self.actor = actor
+
+        def update(self, time, floor):
             self.time = time
-            self.wielding = wielding
+            self.floor = floor
 
         def render(self, console):
             # Makes little barrier
@@ -132,7 +120,7 @@ class Interface:
             console.print(
                 x=self.x+2,
                 y=self.y+1,
-                string=f"{self.name}\nThe {self.race} {self.class_name}",
+                string=f"{self.actor.name}\nThe {self.actor.race} {self.actor.class_name}",
                 fg=tcod.cyan,
             )
 
@@ -140,7 +128,9 @@ class Interface:
             console.print(
                 x=self.x + 2,
                 y=self.y + 5,
-                string=f"HP: {self.hp}        MP: {self.mp}\nCharge: {self.charge}%    AC: {self.ac}",
+                string=f"""
+HP: {self.actor.health}        MP: {self.actor.mp}\nCharge: {self.actor.charge}%    AC: {self.actor.ac}
+""",
                 fg=tcod.purple
             )
 
@@ -149,9 +139,9 @@ class Interface:
                 x=self.x + 2,
                 y=self.y + 9,
                 string=f"""
-Muscle: {self.muscle}       Smarts: {self.smarts}
-Reflexes: {self.reflexes}     Charm: {self.charm}
-Grit: {self.grit}         Wits: {self.wits}
+Muscle: {self.actor.muscle}     Smarts: {self.actor.smarts}
+Reflexes: {self.actor.reflexes}   Charm: {self.actor.charm}
+Grit: {self.actor.grit}       Wits: {self.actor.wits}
     """,
                 fg=tcod.pink
             )
@@ -160,7 +150,7 @@ Grit: {self.grit}         Wits: {self.wits}
             console.print(
                 x=self.x + 2,
                 y=self.y + 16,
-                string=f"Wielding: {self.wielding}\nWearing: {self.wearing}",
+                string=f"Wielding: {self.actor.wielding}\nWearing: {self.actor.wearing}",
                 fg=tcod.white
             )
 

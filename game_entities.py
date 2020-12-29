@@ -47,9 +47,9 @@ class GameEntities:
             entity.render(console)
 
     # Called every tick of time to update entities.
-    def update_all(self):
+    def update_all(self, game_time):
         for entity in self.all:
-            entity.update()
+            entity.update(game_time)
 
     # Clears and resets all the lists.
     def reset(self):

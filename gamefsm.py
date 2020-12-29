@@ -1,5 +1,4 @@
 import tcod
-import globals
 
 
 # A finite state machine used to manage state of game.
@@ -7,9 +6,10 @@ class GameFSM:
     def __init__(self, game_entities, game_interface, player):
         self.playing_state = PlayingState(self, game_entities, game_interface, player)
         self.examine_state = ExamineState(self, game_entities, game_interface, player)
-        self.select_wield_state = SelectWieldState(self, game_interface, player)
-        self.inventory_state = InventoryState(self, game_interface, player)
-        self.read_desc_state = ReadDescState(game_interface, player)
+        self.select_target_state = SelectTargetState(self, game_entities, game_interface, player)
+        self.wield_screen_state = WieldScreenState(self, game_interface, player)
+        self.inventory_screen_state = InventoryScreenState(self, game_interface, player)
+        self.desc_screen_state = DescScreenState(game_interface, player)
 
         self.state = self.playing_state
         self.prev_states = []
@@ -21,6 +21,10 @@ class GameFSM:
         self.state.enter()
 
     def reverse_state(self):
+        # If there isn't a previous state, then exit the game.
+        if not self.prev_states:
+            raise SystemExit()
+
         self.state.exit()
         self.state = self.prev_states.pop()
         self.state.enter()
@@ -28,7 +32,7 @@ class GameFSM:
     def handle_rendering(self, window, console):
         self.state.handle_rendering(console)
 
-        # Rendering that happens regardless of state.
+        # General rendering.
         window.present(console)
         console.clear()
 
@@ -43,10 +47,7 @@ class GameFSM:
 
                 # General input
                 if key == tcod.event.K_ESCAPE:
-                    if self.state == self.playing_state:
-                        raise SystemExit()
-                    else:
-                        self.reverse_state()
+                    self.reverse_state()
 
     def handle_updates(self):
         self.state.handle_updates()
@@ -62,9 +63,12 @@ class BaseState:
 class PlayingState(BaseState):
     def __init__(self, fsm, game_entities, game_interface, player):
         self.fsm = fsm
-        self.player = player
         self.game_entities = game_entities
         self.game_interface = game_interface
+        self.player = player
+
+        self.game_time = 0
+        self.floor_on = 1
 
     def enter(self):
         pass
@@ -95,23 +99,23 @@ class PlayingState(BaseState):
         elif (event.mod & tcod.event.KMOD_CTRL) and key == tcod.event.K_c:
             self.player.attempt_close_door()
         elif key == tcod.event.K_w:
-            self.fsm.set_state(self.fsm.select_wield_state)
+            self.fsm.set_state(self.fsm.wield_screen_state)
         elif key == tcod.event.K_i:
-            self.fsm.set_state(self.fsm.inventory_state)
+            self.fsm.set_state(self.fsm.inventory_screen_state)
         elif key == tcod.event.K_x:
             self.fsm.set_state(self.fsm.examine_state)
 
     def handle_updates(self):
-        self.game_interface.stats_box.update(self.player.health, self.player.wielding, globals.time)
+        self.game_interface.stats_box.update(self.game_time, self.floor_on)
 
         # Updates the game every tick of time in between player actions
         while self.player.action_delay >= 0:
-            globals.time += 1
-            self.game_entities.update_all()
+            self.game_time += 1
+            self.game_entities.update_all(self.game_time)
 
 
 # The state where the player is in the wield menu.
-class SelectWieldState(BaseState):
+class WieldScreenState(BaseState):
     def __init__(self, fsm, game_interface, player):
         self.fsm = fsm
         self.game_interface = game_interface
@@ -153,7 +157,7 @@ class SelectWieldState(BaseState):
         pass
 
 
-class InventoryState(BaseState):
+class InventoryScreenState(BaseState):
     def __init__(self, fsm, game_interface, player):
         self.fsm = fsm
         self.game_interface = game_interface
@@ -166,7 +170,7 @@ class InventoryState(BaseState):
         pass
 
     def handle_rendering(self, console):
-        self.game_interface.inventory_screen.render(console, self.player.inventory)
+        self.game_interface.inventory_screen.render(console, self.player)
 
     def handle_input(self, event):
         key = event.sym
@@ -182,15 +186,15 @@ class InventoryState(BaseState):
             # Search the IDs of the player's inventory for a match with the key pressed and then describe that.
             for item in self.player.inventory:
                 if item["ID"] == key:
-                    globals.player_reading = item["Item"]
-                    self.fsm.set_state(self.fsm.read_desc_state)
+                    self.player.examine_target = item["Item"]
+                    self.fsm.set_state(self.fsm.desc_screen_state)
                     return
 
     def handle_updates(self):
         pass
 
 
-class ReadDescState(BaseState):
+class DescScreenState(BaseState):
     def __init__(self, game_interface, player):
         self.game_interface = game_interface
         self.player = player
@@ -202,7 +206,7 @@ class ReadDescState(BaseState):
         pass
 
     def handle_rendering(self, console):
-        self.game_interface.description_screen.render(console, globals.player_reading)
+        self.game_interface.description_screen.render(console, self.player.examine_target)
 
     def handle_input(self, event):
         pass
@@ -215,28 +219,40 @@ class ExamineState(PlayingState):
     def __init__(self, fsm, game_entities, game_interface, player):
         super().__init__(fsm, game_entities, game_interface, player)
         self.player = player
+        self.game_entities = game_entities
+
+        # The location the player has his cursor over.
         self.examine_loc_x = self.player.x
         self.examine_loc_y = self.player.y
-        self.game_entities = game_entities
+
+    def __highlight_entity(self, color):
+        self.game_entities.get_all_at(self.examine_loc_x, self.examine_loc_y)[0].bgcolor = color
 
     def enter(self):
         self.examine_loc_x = self.player.x
         self.examine_loc_y = self.player.y
+        self.__highlight_entity(tcod.white)
 
     def exit(self):
-        self.game_entities.get_all_at(self.examine_loc_x, self.examine_loc_y)[0].bgcolor = None
+        self.__highlight_entity(None)
 
     def handle_rendering(self, console):
+        # This substate doesn't have its own rendering
         super().handle_rendering(console)
 
     def handle_input(self, event):
         key = event.sym
 
+        # Clean this up
+        if key == tcod.event.K_v:
+            self.player.examine_target = self.game_entities.get_all_at(self.examine_loc_x, self.examine_loc_y)[1]
+            self.fsm.set_state(self.fsm.desc_screen_state)
+
         if (key != tcod.event.K_UP and key != tcod.event.K_DOWN and
                 key != tcod.event.K_RIGHT and key != tcod.event.K_LEFT):
             return
 
-        self.game_entities.get_all_at(self.examine_loc_x, self.examine_loc_y)[0].bgcolor = None
+        self.__highlight_entity(None)
         if key == tcod.event.K_UP:
             self.examine_loc_y -= 1
         elif key == tcod.event.K_DOWN:
@@ -245,7 +261,58 @@ class ExamineState(PlayingState):
             self.examine_loc_x += 1
         elif key == tcod.event.K_LEFT:
             self.examine_loc_x -= 1
-        self.game_entities.get_all_at(self.examine_loc_x, self.examine_loc_y)[0].bgcolor = tcod.yellow
+        self.__highlight_entity(tcod.white)
+
+    def handle_updates(self):
+        pass
+
+
+class SelectTargetState(PlayingState):
+    def __init__(self, fsm, game_entities, game_interface, player):
+        super().__init__(fsm, game_entities, game_interface, player)
+        self.player = player
+        self.game_entities = game_entities
+
+        # The location the player has his cursor over.
+        self.target_x = self.player.x
+        self.target_y = self.player.y
+
+    def __highlight_entity(self, color):
+        self.game_entities.get_all_at(self.target_x, self.target_y)[0].bgcolor = color
+
+    def enter(self):
+        self.target_x = self.player.x
+        self.target_y = self.player.y
+        self.__highlight_entity(tcod.white)
+
+    def exit(self):
+        self.__highlight_entity(None)
+
+    def handle_rendering(self, console):
+        # This substate doesn't have its own rendering
+        super().handle_rendering(console)
+
+    def handle_input(self, event):
+        key = event.sym
+
+        # Clean this up
+        if key == tcod.event.K_KP_ENTER:
+            pass
+
+        if (key != tcod.event.K_UP and key != tcod.event.K_DOWN and
+                key != tcod.event.K_RIGHT and key != tcod.event.K_LEFT):
+            return
+
+        self.__highlight_entity(None)
+        if key == tcod.event.K_UP:
+            self.target_y -= 1
+        elif key == tcod.event.K_DOWN:
+            self.target_y += 1
+        elif key == tcod.event.K_RIGHT:
+            self.target_x += 1
+        elif key == tcod.event.K_LEFT:
+            self.target_x -= 1
+        self.__highlight_entity(tcod.white)
 
     def handle_updates(self):
         pass

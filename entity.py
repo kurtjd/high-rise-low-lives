@@ -17,7 +17,7 @@ class Entity:
     def render(self, console):
         console.print(x=self.x, y=self.y, string=self.graphic, fg=self.color, bg=self.bgcolor)
 
-    def update(self):
+    def update(self, game_time):
         pass
 
     def remove(self):
