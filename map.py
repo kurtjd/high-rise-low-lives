@@ -1,4 +1,4 @@
-import entity
+import tile
 import door
 
 
@@ -8,33 +8,33 @@ class Map:
         self.game_data = game_data
 
     # Converts a character from a map file into a game entity.
-    def __char_to_entity(self, char, x, y, game_entities):
+    def _char_to_entity(self, char, x, y, game_entities):
         if char == '.':
-            tile = self.game_data.tiles["FLOOR"]
+            new_tile = self.game_data.tiles["FLOOR"]
         elif char == '-':
-            tile = self.game_data.tiles["WALL_HORIZ"]
+            new_tile = self.game_data.tiles["WALL_HORIZ"]
         elif char == '|':
-            tile = self.game_data.tiles["WALL_VERT"]
+            new_tile = self.game_data.tiles["WALL_VERT"]
         elif char == '1':
-            tile = self.game_data.tiles["WALL_COR_TL"]
+            new_tile = self.game_data.tiles["WALL_COR_TL"]
         elif char == '2':
-            tile = self.game_data.tiles["WALL_COR_TR"]
+            new_tile = self.game_data.tiles["WALL_COR_TR"]
         elif char == '3':
-            tile = self.game_data.tiles["WALL_COR_BR"]
+            new_tile = self.game_data.tiles["WALL_COR_BR"]
         elif char == '4':
-            tile = self.game_data.tiles["WALL_COR_BL"]
+            new_tile = self.game_data.tiles["WALL_COR_BL"]
         elif char == '#':
-            tile = self.game_data.tiles["HALL"]
+            new_tile = self.game_data.tiles["HALL"]
         elif char == '+':
-            tile = self.game_data.tiles["DOOR_CLOSED"]
+            new_tile = self.game_data.tiles["DOOR_CLOSED"]
         else:
-            tile = self.game_data.tiles["BLANK"]
+            new_tile = self.game_data.tiles["BLANK"]
 
         if char == '+':
-            new_entity = door.Door(x, y, tile["Blocked"], tile["Character"], tile["Color"],
-                                   self.game_data, game_entities)
+            new_entity = door.Door(x, y, self.game_data, game_entities)
         else:
-            new_entity = entity.Entity(x, y, tile["Blocked"], tile["Character"], tile["Color"], game_entities)
+            new_entity = tile.Tile(x, y, new_tile["Name"], new_tile["Desc"], new_tile["Blocked"],
+                                   new_tile["Character"], new_tile["Color"], game_entities)
         return new_entity
 
     # Reads a map from a text file.
@@ -46,5 +46,5 @@ class Map:
             self.map.append([])
             for x in enumerate(y[1]):
                 if x[1] != '\n':
-                    new_entity = self.__char_to_entity(x[1], x[0], y[0], game_entities)
+                    new_entity = self._char_to_entity(x[1], x[0], y[0], game_entities)
                     self.map[y[0]].append(new_entity)

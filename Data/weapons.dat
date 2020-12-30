@@ -22,5 +22,13 @@
     		"Damage": 30,
     		"Speed": 0,
     		"Accuracy": 0
+	},
+	"TEC9":
+	{
+    		"Name": "Tec-9",
+    		"Description": "Good for putting lots of holes in a target quickly.",
+    		"Damage": 25,
+    		"Speed": 0,
+    		"Accuracy": 0
 	}
 }

@@ -33,6 +33,7 @@ Gameplay-features:
 *Some enemies can be bribed or hired.
 *Simple time travel mechanic through technomancy.
 *Different floor themes like residential area full of gang members and other criminals.
+*In actor description state what actor is doing.
 
 Races:
 Human: Completely natural, unable to be augmented but no need to charge.

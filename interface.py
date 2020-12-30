@@ -128,21 +128,22 @@ class Interface:
             console.print(
                 x=self.x + 2,
                 y=self.y + 5,
-                string=f"""
-HP: {self.actor.health}        MP: {self.actor.mp}\nCharge: {self.actor.charge}%    AC: {self.actor.ac}
-""",
+                string=(
+                    f"HP: {self.actor.health}        MP: {self.actor.mp}\n"
+                    f"Charge: {self.actor.charge}%    AC: {self.actor.ac}"
+                ),
                 fg=tcod.purple
             )
 
             # Show attributes
             console.print(
                 x=self.x + 2,
-                y=self.y + 9,
-                string=f"""
-Muscle: {self.actor.muscle}     Smarts: {self.actor.smarts}
-Reflexes: {self.actor.reflexes}   Charm: {self.actor.charm}
-Grit: {self.actor.grit}       Wits: {self.actor.wits}
-    """,
+                y=self.y + 10,
+                string=(
+                    f"Muscle: {self.actor.muscle}     Smarts: {self.actor.smarts}\n"
+                    f"Reflexes: {self.actor.reflexes}   Charm: {self.actor.charm}\n"
+                    f"Grit: {self.actor.grit}       Wits: {self.actor.wits}"
+                ),
                 fg=tcod.pink
             )
 

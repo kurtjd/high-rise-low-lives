@@ -1,19 +1,16 @@
 class GameEntities:
     def __init__(self):
         self.all = []
+        self.tiles = []
         self.actors = []
         self.doors = []
         self.items = []
+        self.terminals = []
+        self.cameras = []
 
     # Returns a list of entities at a given position
     def get_all_at(self, x, y):
-        entities_at_pos = []
-
-        for entity in self.all:
-            if entity.x == x and entity.y == y:
-                entities_at_pos.append(entity)
-
-        return entities_at_pos
+        return [entity for entity in self.all if entity.x == x and entity.y == y]
 
     # Returns the Actor at a given position
     # There can only ever be one Actor at a position so return the first one we find
@@ -33,13 +30,15 @@ class GameEntities:
 
     # Returns the Item entities at a given position
     def get_items_at(self, x, y):
-        items_at_pos = []
+        return [item_at_pos for item_at_pos in self.items if item_at_pos.x == x and item_at_pos.y == y]
 
-        for item_at_pos in self.items:
-            if item_at_pos.x == x and item_at_pos.y == y:
-                items_at_pos.append(item_at_pos)
-
-        return items_at_pos
+    # Returns the Terminal at a given position
+    # There can only ever be one Actor at a position so return the first one we find
+    def get_terminal_at(self, x, y):
+        for terminal_at_pos in self.terminals:
+            if terminal_at_pos.x == x and terminal_at_pos.y == y:
+                return terminal_at_pos
+        return None
 
     # Draws all game entities to the screen.
     def render_all(self, console):

@@ -4,8 +4,10 @@ import entity
 class Door(entity.Entity):
     # ~~~ PRIVATE METHODS ~~~
 
-    def __init__(self, x, y, blocked, graphic, color, game_data, game_entities):
-        super().__init__(x, y, blocked, graphic, color, game_entities)
+    def __init__(self, x, y, game_data, game_entities):
+        tile = game_data.tiles["DOOR_CLOSED"]
+        super().__init__(x, y, tile["Name"], tile["Desc"], tile["Blocked"],
+                         tile["Character"], tile["Color"], game_entities)
         self.game_data = game_data
         self.opened = False
         self.locked = False

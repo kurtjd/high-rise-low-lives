@@ -4,8 +4,8 @@ import entity
 class ItemEntity(entity.Entity):
     # ~~~ PRIVATE METHODS ~~~
 
-    def __init__(self, x, y, graphic, color, item, game_entities):
-        super().__init__(x, y, False, graphic, color, game_entities)
+    def __init__(self, x, y, name, desc, graphic, color, item, game_entities):
+        super().__init__(x, y, name, desc, False, graphic, color, game_entities)
         self.item = item
         self.game_items = game_entities.items
         game_entities.items.append(self)

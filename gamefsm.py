@@ -3,7 +3,7 @@ import tcod
 
 # A finite state machine used to manage state of game.
 class GameFSM:
-    def __init__(self, game_entities, game_interface, player):
+    def __init__(self, game_entities, game_interface, player, map_size):
         self.playing_state = PlayingState(self, game_entities, game_interface, player)
         self.examine_state = ExamineState(self, game_entities, game_interface, player)
         self.select_target_state = SelectTargetState(self, game_entities, game_interface, player)
@@ -13,6 +13,9 @@ class GameFSM:
 
         self.state = self.playing_state
         self.prev_states = []
+
+        self.MAP_WIDTH = map_size[0]
+        self.MAP_HEIGHT = map_size[1]
 
     def set_state(self, new_state):
         self.state.exit()
@@ -104,14 +107,16 @@ class PlayingState(BaseState):
             self.fsm.set_state(self.fsm.inventory_screen_state)
         elif key == tcod.event.K_x:
             self.fsm.set_state(self.fsm.examine_state)
+        elif key == tcod.event.K_f:
+            self.fsm.set_state(self.fsm.select_target_state)
 
     def handle_updates(self):
-        self.game_interface.stats_box.update(self.game_time, self.floor_on)
-
         # Updates the game every tick of time in between player actions
         while self.player.action_delay >= 0:
             self.game_time += 1
             self.game_entities.update_all(self.game_time)
+
+        self.game_interface.stats_box.update(self.game_time, self.floor_on)
 
 
 # The state where the player is in the wield menu.
@@ -136,7 +141,7 @@ class WieldScreenState(BaseState):
         # The minus (-) key makes the player unarmed.
         if key == tcod.event.K_MINUS:
             self.player.attempt_wield(None)
-            self.fsm.set_state(self.fsm.playing_state)
+            self.fsm.reverse_state()
 
         # If not a letter key, then do nothing.
         elif tcod.event.K_a <= key <= tcod.event.K_z:
@@ -150,7 +155,7 @@ class WieldScreenState(BaseState):
             for wieldable in self.player.get_wieldable_items():
                 if wieldable["ID"] == key:
                     self.player.attempt_wield(wieldable["Item"])
-                    self.fsm.set_state(self.fsm.playing_state)
+                    self.fsm.reverse_state()
                     return
 
     def handle_updates(self):
@@ -215,104 +220,117 @@ class DescScreenState(BaseState):
         pass
 
 
-class ExamineState(PlayingState):
+# This state is when the player is selecting something on the map while playing.
+class SelectState(PlayingState):
     def __init__(self, fsm, game_entities, game_interface, player):
         super().__init__(fsm, game_entities, game_interface, player)
-        self.player = player
-        self.game_entities = game_entities
 
         # The location the player has his cursor over.
-        self.examine_loc_x = self.player.x
-        self.examine_loc_y = self.player.y
-
-    def __highlight_entity(self, color):
-        self.game_entities.get_all_at(self.examine_loc_x, self.examine_loc_y)[0].bgcolor = color
+        self.select_x = self.player.x
+        self.select_y = self.player.y
 
     def enter(self):
-        self.examine_loc_x = self.player.x
-        self.examine_loc_y = self.player.y
-        self.__highlight_entity(tcod.white)
+        self.select_x = self.player.x
+        self.select_y = self.player.y
+        self._highlight_entity(tcod.white)
 
     def exit(self):
-        self.__highlight_entity(None)
+        self._highlight_entity(None)
 
-    def handle_rendering(self, console):
-        # This substate doesn't have its own rendering
-        super().handle_rendering(console)
+    def _highlight_entity(self, color):
+        self.game_entities.get_all_at(self.select_x, self.select_y)[0].bgcolor = color
 
-    def handle_input(self, event):
-        key = event.sym
-
-        # Clean this up
-        if key == tcod.event.K_v:
-            self.player.examine_target = self.game_entities.get_all_at(self.examine_loc_x, self.examine_loc_y)[1]
-            self.fsm.set_state(self.fsm.desc_screen_state)
-
+    def move_cursor(self, key):
         if (key != tcod.event.K_UP and key != tcod.event.K_DOWN and
                 key != tcod.event.K_RIGHT and key != tcod.event.K_LEFT):
             return
 
-        self.__highlight_entity(None)
         if key == tcod.event.K_UP:
-            self.examine_loc_y -= 1
+            if self.select_y > 0:
+                self._highlight_entity(None)
+                self.select_y -= 1
+                self._highlight_entity(tcod.white)
+            else:
+                return
         elif key == tcod.event.K_DOWN:
-            self.examine_loc_y += 1
+            if self.select_y < (self.fsm.MAP_HEIGHT - 1):
+                self._highlight_entity(None)
+                self.select_y += 1
+                self._highlight_entity(tcod.white)
+            else:
+                return
         elif key == tcod.event.K_RIGHT:
-            self.examine_loc_x += 1
+            if self.select_x < (self.fsm.MAP_WIDTH - 1):
+                self._highlight_entity(None)
+                self.select_x += 1
+                self._highlight_entity(tcod.white)
+            else:
+                return
         elif key == tcod.event.K_LEFT:
-            self.examine_loc_x -= 1
-        self.__highlight_entity(tcod.white)
+            if self.select_x > 0:
+                self._highlight_entity(None)
+                self.select_x -= 1
+                self._highlight_entity(tcod.white)
+            else:
+                return
+
+
+# When the player is selecting something to examine.
+class ExamineState(SelectState):
+    def __init__(self, fsm, game_entities, game_interface, player):
+        super().__init__(fsm, game_entities, game_interface, player)
+
+    def handle_input(self, event):
+        key = event.sym
+
+        if key == tcod.event.K_v:
+            self.player.examine_target = self.game_entities.get_all_at(self.select_x, self.select_y)[-1]
+            self.fsm.set_state(self.fsm.desc_screen_state)
+
+        self.move_cursor(key)
 
     def handle_updates(self):
         pass
 
 
-class SelectTargetState(PlayingState):
+# When the player is something to attack ranged.
+class SelectTargetState(SelectState):
     def __init__(self, fsm, game_entities, game_interface, player):
         super().__init__(fsm, game_entities, game_interface, player)
-        self.player = player
-        self.game_entities = game_entities
-
-        # The location the player has his cursor over.
-        self.target_x = self.player.x
-        self.target_y = self.player.y
-
-    def __highlight_entity(self, color):
-        self.game_entities.get_all_at(self.target_x, self.target_y)[0].bgcolor = color
+        self.bullet_path = []
 
     def enter(self):
-        self.target_x = self.player.x
-        self.target_y = self.player.y
-        self.__highlight_entity(tcod.white)
+        self.bullet_path = []
+        super().enter()
 
-    def exit(self):
-        self.__highlight_entity(None)
+    # Uses the bresenham line algorithm to get a list of points on the map the bullet would pass through.
+    def _set_bullet_path(self, x1, y1, x2, y2):
+        path = tcod.los.bresenham((x1, y1), (x2, y2)).tolist()[1:]  # Disclude the player from the bullet path.
+        new_path = []
+
+        # Check each point in the path for a blocked entity. If so, stop the bullet path there.
+        for point in path:
+            new_path.append(point)
+            self.bullet_path = new_path
+            for entity in self.game_entities.get_all_at(point[0], point[1]):
+                if entity.blocked:
+                    return
 
     def handle_rendering(self, console):
-        # This substate doesn't have its own rendering
         super().handle_rendering(console)
+
+        for point in self.bullet_path:
+            console.print(point[0], point[1], '*', tcod.red)
 
     def handle_input(self, event):
         key = event.sym
 
-        # Clean this up
-        if key == tcod.event.K_KP_ENTER:
-            pass
+        self.move_cursor(key)
+        self._set_bullet_path(self.player.x, self.player.y, self.select_x, self.select_y)
 
-        if (key != tcod.event.K_UP and key != tcod.event.K_DOWN and
-                key != tcod.event.K_RIGHT and key != tcod.event.K_LEFT):
-            return
-
-        self.__highlight_entity(None)
-        if key == tcod.event.K_UP:
-            self.target_y -= 1
-        elif key == tcod.event.K_DOWN:
-            self.target_y += 1
-        elif key == tcod.event.K_RIGHT:
-            self.target_x += 1
-        elif key == tcod.event.K_LEFT:
-            self.target_x -= 1
-        self.__highlight_entity(tcod.white)
+        if key == tcod.event.K_RETURN:
+            self.player.attempt_atk(self.select_x, self.select_y, True, self.bullet_path)
+            self.fsm.reverse_state()
 
     def handle_updates(self):
         pass

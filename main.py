@@ -5,6 +5,8 @@ from map import Map
 from actor import Actor
 from player import Player
 from item_entity import ItemEntity
+from terminal import Terminal
+from camera import Camera
 from weapon import Weapon
 from databases import Databases
 from gamefsm import GameFSM
@@ -12,7 +14,7 @@ from game_entities import GameEntities
 
 
 # Initializes tcod and returns a window and console.
-def init_tcod():
+def init_tcod() -> None:
     # Initialize tcod and game console
     tileset = tcod.tileset.load_tilesheet("Tilesets/tileset.png", 32, 8, tcod.tileset.CHARMAP_TCOD)
     window = tcod.context.new_terminal(
@@ -73,8 +75,7 @@ def init_interface(colors):
     return game_interface
 
 
-# Spawns some enemies
-# This is temporary, will eventually be done procedurally.
+# The following functions are temporary, will eventually be done procedurally.
 def spawn_enemies(game_data, game_entities, game_interface):
     enemy = Actor(
         "Rent-a-Cop",
@@ -107,13 +108,13 @@ def spawn_enemies(game_data, game_entities, game_interface):
     enemy.attempt_wield(enemy.inventory[0]["Item"])
 
 
-# Spawns some items
-# This is temporary, will eventually be done procedurally.
 def spawn_items(weapons, game_entities):
     ItemEntity(
         19,
         20,
-        '(',  # Graphic hard-coded for now
+        weapons["SAMURAI_SWORD"]["Name"],
+        weapons["SAMURAI_SWORD"]["Description"],
+        ')',  # Graphic hard-coded for now
         tcod.red,
         Weapon(
             weapons["SAMURAI_SWORD"]["Name"],
@@ -125,15 +126,37 @@ def spawn_items(weapons, game_entities):
         game_entities
     )
 
+    ItemEntity(
+        18,
+        20,
+        weapons["TEC9"]["Name"],
+        weapons["TEC9"]["Description"],
+        ')',  # Graphic hard-coded for now
+        tcod.red,
+        Weapon(
+            weapons["TEC9"]["Name"],
+            weapons["TEC9"]["Description"],
+            weapons["TEC9"]["Damage"],
+            weapons["TEC9"]["Speed"],
+            weapons["TEC9"]["Accuracy"]
+        ),
+        game_entities
+    )
+
+
+def spawn_terminals(game_data, game_entities, game_interface):
+    Terminal(60, 19, game_data, game_entities, game_interface)
+
+
+def spawn_cameras(game_data, game_entities):
+    Camera(58, 16, game_data, game_entities)
+
 
 # Game Constants
 SCREEN_WIDTH = 100
 SCREEN_HEIGHT = 50
 MAP_WIDTH = 70
 MAP_HEIGHT = 42
-
-
-# Game variables
 
 
 GAME_DATA = Databases()
@@ -152,12 +175,14 @@ game_interface = init_interface(GAME_DATA.colors)
 # THESE ARE TEMPORARY, JUST HERE FOR SOMETHING TO TEST
 spawn_items(GAME_DATA.weapons, game_entities)
 spawn_enemies(GAME_DATA, game_entities, game_interface)
+spawn_terminals(GAME_DATA, game_entities, game_interface)
+spawn_cameras(GAME_DATA, game_entities)
 
 # Init player last so they are rendered last.
 player = init_player(GAME_DATA, game_entities, game_interface)
 game_interface.stats_box.set_actor(player)
 
-game_fsm = GameFSM(game_entities, game_interface, player)
+game_fsm = GameFSM(game_entities, game_interface, player, (MAP_WIDTH, MAP_HEIGHT))
 
 # The game loop!
 while True:

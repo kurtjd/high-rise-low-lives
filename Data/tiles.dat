@@ -1,66 +1,88 @@
 {
 	"BLANK":
 	{
+		"Name": "Nothing",
+		"Desc": "This is nothing.",
 		"Character": 32,
 		"Color": [0, 255, 0],
 		"Blocked": true
 	},
 	"FLOOR":
 	{
+		"Name": "Floor",
+		"Desc": "The floor.",
 		"Character": 46,
 		"Color": [0, 255, 0],
 		"Blocked": false
 	},
 	"HALL":
 	{
+		"Name": "Hallway",
+		"Desc": "This is a hallway.",
 		"Character": 9617,
 		"Color": [0, 255, 0],
 		"Blocked": false
 	},
 	"DOOR_CLOSED":
 	{
+		"Name": "Door",
+		"Desc": "A closed door.",
 		"Character": 43,
 		"Color": [0, 255, 0],
 		"Blocked": true
 	},
 	"DOOR_OPEN":
 	{
+		"Name": "Door",
+		"Desc": "An open door.",
 		"Character": 45,
 		"Color": [0, 255, 0],
 		"Blocked": false
 	},
 	"WALL_HORIZ":
 	{
+		"Name": "Wall",
+		"Desc": "This is a wall.",
 		"Character": 9472,
 		"Color": [0, 255, 0],
 		"Blocked": true
 	},
 	"WALL_VERT":
 	{
+		"Name": "Wall",
+		"Desc": "This is a wall.",
 		"Character": 9474,
 		"Color": [0, 255, 0],
 		"Blocked": true
 	},
 	"WALL_COR_TL":
 	{
+		"Name": "Wall",
+		"Desc": "This is a wall.",
 		"Character": 9484,
 		"Color": [0, 255, 0],
 		"Blocked": true
 	},
 	"WALL_COR_TR":
 	{
+		"Name": "Wall",
+		"Desc": "This is a wall.",
 		"Character": 9488,
 		"Color": [0, 255, 0],
 		"Blocked": true
 	},
 	"WALL_COR_BL":
 	{
+		"Name": "Wall",
+		"Desc": "This is a wall.",
 		"Character": 9492,
 		"Color": [0, 255, 0],
 		"Blocked": true
 	},
 	"WALL_COR_BR":
 	{
+		"Name": "Wall",
+		"Desc": "This is a wall.",
 		"Character": 9496,
 		"Color": [0, 255, 0],
 		"Blocked": true
@@ -70,5 +92,21 @@
 		"Character": 37,
 		"Color": [176, 172, 162],
 		"Blocked": false
+	},
+	"TERMINAL":
+	{
+		"Name": "Terminal",
+		"Desc": "A terminal connecting you to cyberspace.",
+		"Character": 63,
+		"Color": [255, 255, 255],
+		"Blocked": true
+	},
+	"CAMERA":
+	{
+		"Name": "Camera",
+		"Desc": "Say cheese!",
+		"Character": 44,
+		"Color": [0, 0, 255],
+		"Blocked": true
 	}
 }
