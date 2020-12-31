@@ -1,7 +1,10 @@
+import actor
+
+
 # Each Actor carries a reference to one of these AI functions depending on its abilities and style.
 
 # For intelligent actors that like to fight up-close and personal.
-def smart_melee(src_actor, game_actors):
+def smart_melee(src_actor: actor.Actor, game_actors: list[actor.Actor]) -> None:
     # If not currently targeting an actor, find the first one.
     if src_actor.atk_target is None:
         for entity in game_actors:

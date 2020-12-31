@@ -2,20 +2,20 @@ import json
 
 
 class Databases:
-    def __init__(self):
+    def __init__(self) -> None:
         # A database of NPCs
-        self.npcs = None
+        self.npcs: dict = {}
 
         # A database of weapons
-        self.weapons = None
+        self.weapons: dict = {}
 
         # A database of tiles
-        self.tiles = None
+        self.tiles: dict = {}
 
         # A database of colors
-        self.colors = None
+        self.colors: dict = {}
 
-    def load_from_files(self):
+    def load_from_files(self) -> None:
         # Colors
         with open("Data/colors.dat") as data_file:
             self.colors = json.load(data_file)

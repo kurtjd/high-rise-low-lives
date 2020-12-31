@@ -14,24 +14,30 @@ from game_entities import GameEntities
 
 
 # Initializes tcod and returns a window and console.
-def init_tcod() -> None:
+def init_tcod() -> tuple[tcod.context.Context, tcod.Console]:
     # Initialize tcod and game console
-    tileset = tcod.tileset.load_tilesheet("Tilesets/tileset.png", 32, 8, tcod.tileset.CHARMAP_TCOD)
-    window = tcod.context.new_terminal(
+    tileset: tcod.tileset.Tileset = tcod.tileset.load_tilesheet(
+        "Tilesets/tileset.png",
+        32,
+        8,
+        tcod.tileset.CHARMAP_TCOD
+    )
+
+    window_: tcod.context.Context = tcod.context.new_terminal(
         SCREEN_WIDTH,
         SCREEN_HEIGHT,
         tileset=tileset,
         title="High-Rise: Low-Lives",
         vsync=True
     )
-    console = tcod.Console(SCREEN_WIDTH, SCREEN_HEIGHT, order='F')
+    console: tcod.Console = tcod.Console(SCREEN_WIDTH, SCREEN_HEIGHT, order='F')
 
-    return (window, console)
+    return window_, console
 
 
 # Initializes the player
-def init_player(game_data, game_entitites, game_interface):
-    player = Player(
+def init_player(game_data: Databases, game_entities_: GameEntities, game_interface_: Interface) -> Player:
+    player_: Player = Player(
         "Hiro",
         "Human",
         "Infiltrator",
@@ -47,37 +53,29 @@ def init_player(game_data, game_entitites, game_interface):
         '@',
         tcod.white,
         game_data,
-        game_entities,
-        game_interface
+        game_entities_,
+        game_interface_
     )
 
-    return player
+    return player_
 
 
 # Initializes the game interface.
-def init_interface(colors):
-    game_interface = Interface()
-    game_interface.wield_screen = game_interface.WieldScreen(0, 0)
-    game_interface.description_screen = game_interface.DescriptionScreen( 0, 0)
-    game_interface.inventory_screen = game_interface.InventoryScreen(0, 0)
-    game_interface.stats_box = game_interface.StatsBox(
-        MAP_WIDTH + 1, 0, SCREEN_WIDTH - MAP_WIDTH, SCREEN_HEIGHT)
-    game_interface.message_box = game_interface.MessageBox(
-        0, MAP_HEIGHT, MAP_WIDTH + 1, SCREEN_HEIGHT - MAP_HEIGHT)
-
-    game_interface.message_box.add_msg(
+def init_interface(colors: dict) -> Interface:
+    game_interface_: Interface = Interface(SCREEN_WIDTH, SCREEN_HEIGHT, MAP_WIDTH, MAP_HEIGHT)
+    game_interface_.message_box.add_msg(
         "Welcome to the High-Rise, punk!", colors["SYS_MSG"]
     )
-    game_interface.message_box.add_msg(
+    game_interface_.message_box.add_msg(
         "Will you be the low-life who steals the secrets of the Mega Corp?", colors["SYS_MSG"]
     )
 
-    return game_interface
+    return game_interface_
 
 
 # The following functions are temporary, will eventually be done procedurally.
-def spawn_enemies(game_data, game_entities, game_interface):
-    enemy = Actor(
+def spawn_enemies(game_data_: Databases, game_entities_: GameEntities, game_interface_: Interface) -> None:
+    enemy: Actor = Actor(
         "Rent-a-Cop",
         "Human",
         "Brawler",
@@ -94,21 +92,21 @@ def spawn_enemies(game_data, game_entities, game_interface):
         False,
         'C',
         tcod.yellow,
-        game_data,
-        game_entities,
-        game_interface
+        game_data_,
+        game_entities_,
+        game_interface_
     )
     enemy.add_inventory(Weapon(
-        game_data.weapons["BATON"]["Name"],
-        game_data.weapons["BATON"]["Description"],
-        game_data.weapons["BATON"]["Damage"],
-        game_data.weapons["BATON"]["Speed"],
-        game_data.weapons["BATON"]["Accuracy"]
+        game_data_.weapons["BATON"]["Name"],
+        game_data_.weapons["BATON"]["Description"],
+        game_data_.weapons["BATON"]["Damage"],
+        game_data_.weapons["BATON"]["Speed"],
+        game_data_.weapons["BATON"]["Accuracy"]
     ))
     enemy.attempt_wield(enemy.inventory[0]["Item"])
 
 
-def spawn_items(weapons, game_entities):
+def spawn_items(weapons: dict, game_entities_: GameEntities) -> None:
     ItemEntity(
         19,
         20,
@@ -123,7 +121,7 @@ def spawn_items(weapons, game_entities):
             weapons["SAMURAI_SWORD"]["Speed"],
             weapons["SAMURAI_SWORD"]["Accuracy"]
         ),
-        game_entities
+        game_entities_
     )
 
     ItemEntity(
@@ -140,37 +138,39 @@ def spawn_items(weapons, game_entities):
             weapons["TEC9"]["Speed"],
             weapons["TEC9"]["Accuracy"]
         ),
-        game_entities
+        game_entities_
     )
 
 
-def spawn_terminals(game_data, game_entities, game_interface):
-    Terminal(60, 19, game_data, game_entities, game_interface)
+def spawn_terminals(game_data_: Databases, game_entities_: GameEntities, game_interface_: Interface) -> None:
+    Terminal(60, 19, game_data_, game_entities_, game_interface_)
 
 
-def spawn_cameras(game_data, game_entities):
-    Camera(58, 16, game_data, game_entities)
+def spawn_cameras(game_data_: Databases, game_entities_: GameEntities) -> None:
+    Camera(58, 16, game_data_, game_entities_)
 
 
 # Game Constants
-SCREEN_WIDTH = 100
-SCREEN_HEIGHT = 50
-MAP_WIDTH = 70
-MAP_HEIGHT = 42
+SCREEN_WIDTH: int = 100
+SCREEN_HEIGHT: int = 50
+MAP_WIDTH: int = 70
+MAP_HEIGHT: int = 42
 
 
-GAME_DATA = Databases()
+GAME_DATA: Databases = Databases()
 GAME_DATA.load_from_files()
-window, root_console = init_tcod()
+window: tcod.context.Context
+root_console: tcod.Console
+(window, root_console) = init_tcod()
 
-game_entities = GameEntities()
+game_entities: GameEntities = GameEntities()
 
 # Generate map (for now read from file, will be randomly generated)
 # Initialize first so that it is drawn on bottom
-map = Map(GAME_DATA)
-map.read_map("Maps/game_map.txt", game_entities)
+game_map: Map = Map(GAME_DATA)
+game_map.read_map("Maps/game_map.txt", game_entities)
 
-game_interface = init_interface(GAME_DATA.colors)
+game_interface: Interface = init_interface(GAME_DATA.colors)
 
 # THESE ARE TEMPORARY, JUST HERE FOR SOMETHING TO TEST
 spawn_items(GAME_DATA.weapons, game_entities)
@@ -179,10 +179,10 @@ spawn_terminals(GAME_DATA, game_entities, game_interface)
 spawn_cameras(GAME_DATA, game_entities)
 
 # Init player last so they are rendered last.
-player = init_player(GAME_DATA, game_entities, game_interface)
+player: Player = init_player(GAME_DATA, game_entities, game_interface)
 game_interface.stats_box.set_actor(player)
 
-game_fsm = GameFSM(game_entities, game_interface, player, (MAP_WIDTH, MAP_HEIGHT))
+game_fsm: GameFSM = GameFSM(game_entities, game_interface, player, (MAP_WIDTH, MAP_HEIGHT))
 
 # The game loop!
 while True:

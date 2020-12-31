@@ -1,20 +1,38 @@
+from typing import Optional, Union, Any
 import tcod
+import actor
 
 
 class Interface:
-    def __init__(self):
-        self.wield_screen = None
-        self.description_screen = None
-        self.inventory_screen = None
-        self.stats_box = None
-        self.message_box = None
+    def __init__(self, screen_w: int, screen_h: int, map_w: int, map_h: int) -> None:
+        self.screen_w: int = screen_w
+        self.screen_h: int = screen_h
+        self.map_w: int = map_w
+        self.map_h: int = map_h
+
+        self.wield_screen: Interface.WieldScreen = self.WieldScreen(0, 0)
+        self.description_screen: Interface.DescriptionScreen = self.DescriptionScreen(0, 0)
+        self.inventory_screen: Interface.InventoryScreen = self.InventoryScreen(0, 0)
+
+        self.stats_box: Interface.StatsBox = self.StatsBox(
+            self.map_w + 1,
+            0,
+            self.screen_w - self.map_w,
+            self.screen_h
+        )
+        self.message_box: Interface.MessageBox = self.MessageBox(
+            0,
+            self.map_h,
+            self.map_w + 1,
+            self.screen_h - self.map_h
+        )
 
     class WieldScreen:
-        def __init__(self, x, y):
-            self.x = x
-            self.y = y
+        def __init__(self, x: int, y: int) -> None:
+            self.x: int = x
+            self.y: int = y
 
-        def render(self, console, wieldables):
+        def render(self, console: tcod.Console, wieldables: dict) -> None:
             console.print(
                 x=self.x,
                 y=self.y,
@@ -30,7 +48,7 @@ class Interface:
 
             for wieldable in enumerate(wieldables):
                 # For smoother grammar
-                amount = wieldable[1]["Amount"]
+                amount: Union[int, str] = wieldable[1]["Amount"]
                 if amount == 1:
                     amount = 'a'
 
@@ -42,11 +60,11 @@ class Interface:
                 )
 
     class DescriptionScreen:
-        def __init__(self, x, y):
-            self.x = x
-            self.y = y
+        def __init__(self, x: int, y: int) -> None:
+            self.x: int = x
+            self.y: int = y
 
-        def render(self, console, thing):
+        def render(self, console: tcod.Console, thing: Any) -> None:
             console.print(
                 x=self.x,
                 y=self.y,
@@ -61,21 +79,21 @@ class Interface:
             )
 
     class InventoryScreen:
-        def __init__(self, x, y):
-            self.x = x
-            self.y = y
+        def __init__(self, x: int, y: int) -> None:
+            self.x: int = x
+            self.y: int = y
 
-        def render(self, console, actor):
+        def render(self, console: tcod.Console, actor_: "actor.Actor") -> None:
             console.print(
                 self.x,
                 self.y,
-                string=f"Inventory: {len(actor.inventory)} / {actor.MAX_INVENTORY_SIZE} slots",
+                string=f"Inventory: {len(actor_.inventory)} / {actor_.MAX_INVENTORY_SIZE} slots",
                 fg=tcod.green
             )
 
-            for item in enumerate(actor.inventory):
+            for item in enumerate(actor_.inventory):
                 # For smoother grammar
-                amount = item[1]["Amount"]
+                amount: Union[int, str] = item[1]["Amount"]
                 if amount == 1:
                     amount = 'a'
 
@@ -89,29 +107,29 @@ class Interface:
     class StatsBox:
         # ~~~ PRIVATE METHODS ~~~
 
-        def __init__(self, x, y, width, height):
-            self.x = x
-            self.y = y
-            self.width = width
-            self.height = height
+        def __init__(self, x: int, y: int, width: int, height: int) -> None:
+            self.x: int = x
+            self.y: int = y
+            self.width: int = width
+            self.height: int = height
 
             # The actor whos stats appear here.
-            self.actor = None
+            self.actor: Optional["actor.Actor"] = None
 
-            self.floor = 1
-            self.time = 0
+            self.floor: int = 1
+            self.time: int = 0
 
         # ~~~ PUBLIC METHODS ~~~
 
         # Sets the actor whos stats we want to show up.
-        def set_actor(self, actor):
-            self.actor = actor
+        def set_actor(self, actor_: "actor.Actor") -> None:
+            self.actor: "actor.Actor" = actor_
 
-        def update(self, time, floor):
-            self.time = time
-            self.floor = floor
+        def update(self, time: int, floor: int) -> None:
+            self.time: int = time
+            self.floor: int = floor
 
-        def render(self, console):
+        def render(self, console: tcod.Console) -> None:
             # Makes little barrier
             for i in range(self.height):
                 console.print(x=self.x, y=self.y+i, string=chr(9474), fg=tcod.green)
@@ -166,23 +184,23 @@ class Interface:
     class MessageBox:
         # ~~~ PRIVATE METHODS ~~~
 
-        def __init__(self, x, y, width, height):
-            self.x = x
-            self.y = y
-            self.width = width
-            self.height = height
-            self.messages = []
+        def __init__(self, x: int, y: int, width: int, height: int) -> None:
+            self.x: int = x
+            self.y: int = y
+            self.width: int = width
+            self.height: int = height
+            self.messages: list[dict] = []
 
         # ~~~ PUBLIC METHODS ~~~
         # Adds a message to the message box.
-        def add_msg(self, msg, color):
+        def add_msg(self, msg: str, color: Optional[tuple[int, int, int]]) -> None:
             if len(self.messages) >= (self.height - 1):
                 self.messages.pop(0)
 
             self.messages.append(dict({"Text": msg, "Color": color}))
 
         # Draws the messgae box to the screen.
-        def render(self, console):
+        def render(self, console: tcod.Console) -> None:
             # Makes little barrier
             for i in range(self.width):
                 console.print(x=self.x + i, y=self.y, string=chr(9472), fg=tcod.green)
