@@ -1,58 +1,57 @@
 from typing import Union, Optional
 import tcod
-import game_entities
+import entities
 import interface
-import player
 
 
 # A finite state machine used to manage state of game.
 class GameFSM:
     def __init__(
             self,
-            game_entities_: game_entities.GameEntities,
+            entities_: entities.GameEntities,
             game_interface: interface.Interface,
-            player_: player.Player,
+            player_: entities.Player,
             map_size: tuple[int, int]
     ) -> None:
 
         self.playing_state: PlayingState = PlayingState(
             self,
-            game_entities_,
+            entities_,
             game_interface,
             player_
         )
 
         self.examine_state: ExamineState = ExamineState(
             self,
-            game_entities_,
+            entities_,
             game_interface,
             player_
         )
 
         self.select_target_state: SelectTargetState = SelectTargetState(
             self,
-            game_entities_,
+            entities_,
             game_interface,
             player_
         )
 
         self.wield_screen_state: WieldScreenState = WieldScreenState(
             self,
-            game_entities_,
+            entities_,
             game_interface,
             player_
         )
 
         self.inventory_screen_state: InventoryScreenState = InventoryScreenState(
             self,
-            game_entities_,
+            entities_,
             game_interface,
             player_
         )
 
         self.desc_screen_state: DescScreenState = DescScreenState(
             self,
-            game_entities_,
+            entities_,
             game_interface,
             player_
         )
@@ -107,14 +106,14 @@ class BaseState:
     def __init__(
             self,
             fsm: GameFSM,
-            game_entities_: game_entities.GameEntities,
+            entities_: entities.GameEntities,
             game_interface: interface.Interface,
-            player_: player.Player
+            player_: entities.Player
     ) -> None:
         self.fsm: GameFSM = fsm
-        self.game_entities: game_entities.GameEntities = game_entities_
+        self.entities: entities.GameEntities = entities_
         self.game_interface: interface.Interface = game_interface
-        self.player: player.Player = player_
+        self.player: entities.Player = player_
 
     def enter(self) -> None:
         pass
@@ -137,11 +136,11 @@ class PlayingState(BaseState):
     def __init__(
             self,
             fsm: GameFSM,
-            game_entities_: game_entities.GameEntities,
+            entities_: entities.GameEntities,
             game_interface: interface.Interface,
-            player_: player.Player
+            player_: entities.Player
     ) -> None:
-        super().__init__(fsm, game_entities_, game_interface, player_)
+        super().__init__(fsm, entities_, game_interface, player_)
         self.game_time: int = 0
         self.floor_on: int = 1
 
@@ -154,7 +153,7 @@ class PlayingState(BaseState):
     def handle_rendering(self, console: tcod.Console) -> None:
         self.game_interface.stats_box.render(console)
         self.game_interface.message_box.render(console)
-        self.game_entities.render_all(console)
+        self.entities.render_all(console)
 
     def handle_input(self, event: tcod.event) -> None:
         key: int = event.sym
@@ -186,7 +185,7 @@ class PlayingState(BaseState):
         # Updates the game every tick of time in between player actions
         while self.player.action_delay >= 0:
             self.game_time += 1
-            self.game_entities.update_all(self.game_time)
+            self.entities.update_all(self.game_time)
 
         self.game_interface.stats_box.update(self.game_time, self.floor_on)
 
@@ -196,11 +195,11 @@ class WieldScreenState(BaseState):
     def __init__(
             self,
             fsm: GameFSM,
-            game_entities_: game_entities.GameEntities,
+            entities_: entities.GameEntities,
             game_interface: interface.Interface,
-            player_: player.Player
+            player_: entities.Player
     ) -> None:
-        super().__init__(fsm, game_entities_, game_interface, player_)
+        super().__init__(fsm, entities_, game_interface, player_)
 
     def enter(self) -> None:
         pass
@@ -242,11 +241,11 @@ class InventoryScreenState(BaseState):
     def __init__(
             self,
             fsm: GameFSM,
-            game_entities_: game_entities.GameEntities,
+            entities_: entities.GameEntities,
             game_interface: interface.Interface,
-            player_: player.Player
+            player_: entities.Player
     ) -> None:
-        super().__init__(fsm, game_entities_, game_interface, player_)
+        super().__init__(fsm, entities_, game_interface, player_)
 
     def enter(self) -> None:
         pass
@@ -283,11 +282,11 @@ class DescScreenState(BaseState):
     def __init__(
             self,
             fsm: GameFSM,
-            game_entities_: game_entities.GameEntities,
+            entities_: entities.GameEntities,
             game_interface: interface.Interface,
-            player_: player.Player
+            player_: entities.Player
     ) -> None:
-        super().__init__(fsm, game_entities_, game_interface, player_)
+        super().__init__(fsm, entities_, game_interface, player_)
 
     def enter(self) -> None:
         pass
@@ -310,11 +309,11 @@ class SelectState(PlayingState):
     def __init__(
             self,
             fsm: GameFSM,
-            game_entities_: game_entities.GameEntities,
+            entities_: entities.GameEntities,
             game_interface: interface.Interface,
-            player_: player.Player
+            player_: entities.Player
     ) -> None:
-        super().__init__(fsm, game_entities_, game_interface, player_)
+        super().__init__(fsm, entities_, game_interface, player_)
 
         # The location the player has his cursor over.
         self.select_x: int = self.player.x
@@ -329,7 +328,7 @@ class SelectState(PlayingState):
         self._highlight_entity(None)
 
     def _highlight_entity(self, color: Optional[tuple[int, int, int]]) -> None:
-        self.game_entities.get_all_at(self.select_x, self.select_y)[0].bgcolor = color
+        self.entities.get_all_at(self.select_x, self.select_y)[0].bgcolor = color
 
     def move_cursor(self, key: int) -> None:
         if (key != tcod.event.K_UP and key != tcod.event.K_DOWN and
@@ -371,17 +370,17 @@ class ExamineState(SelectState):
     def __init__(
             self,
             fsm: GameFSM,
-            game_entities_: game_entities.GameEntities,
+            entities_: entities.GameEntities,
             game_interface: interface.Interface,
-            player_: player.Player
+            player_: entities.Player
     ) -> None:
-        super().__init__(fsm, game_entities_, game_interface, player_)
+        super().__init__(fsm, entities_, game_interface, player_)
 
     def handle_input(self, event: tcod.event) -> None:
         key: int = event.sym
 
         if key == tcod.event.K_v:
-            self.player.examine_target = self.game_entities.get_all_at(self.select_x, self.select_y)[-1]
+            self.player.examine_target = self.entities.get_all_at(self.select_x, self.select_y)[-1]
             self.fsm.set_state(self.fsm.desc_screen_state)
 
         self.move_cursor(key)
@@ -395,11 +394,11 @@ class SelectTargetState(SelectState):
     def __init__(
             self,
             fsm: GameFSM,
-            game_entities_: game_entities.GameEntities,
+            entities_: entities.GameEntities,
             game_interface: interface.Interface,
-            player_: player.Player
+            player_: entities.Player
     ) -> None:
-        super().__init__(fsm, game_entities_, game_interface, player_)
+        super().__init__(fsm, entities_, game_interface, player_)
         self.bullet_path: list[tuple[int, int]] = []
 
     def enter(self) -> None:
@@ -415,7 +414,7 @@ class SelectTargetState(SelectState):
         for point in path:
             new_path.append(point)
             self.bullet_path = new_path
-            for entity in self.game_entities.get_all_at(point[0], point[1]):
+            for entity in self.entities.get_all_at(point[0], point[1]):
                 if entity.blocked:
                     return
 

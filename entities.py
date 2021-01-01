@@ -1,18 +1,113 @@
-from collections.abc import Callable
 from enum import Enum, auto
-from typing import Optional, Any
-import game_entities
+from typing import Optional, Callable, Any
+import tcod
 import databases
 import interface
-import entity
-import weapon
-import door
-import terminal
-import item_entity
-import item
+import items
 
 
-class Actor(entity.Entity):
+class GameEntities:
+    def __init__(self) -> None:
+        self.all: list[Entity] = []
+        self.tiles: list[Tile] = []
+        self.actors:  list[Actor] = []
+        self.turrets: list[Turret] = []
+        self.doors:  list[Door] = []
+        self.items:  list[ItemEntity] = []
+        self.terminals:  list[Terminal] = []
+        self.cameras:  list[Camera] = []
+
+    # Returns a list of entities at a given position
+    def get_all_at(self, x: int, y: int) -> list["Entity"]:
+        return [entity_ for entity_ in self.all if entity_.x == x and entity_.y == y]
+
+    # Returns the Actor at a given position
+    # There can only ever be one Actor at a position so return the first one we find
+    def get_actor_at(self, x: int, y: int) -> Optional["Actor"]:
+        for actor_ in self.actors:
+            if actor_.x == x and actor_.y == y:
+                return actor_
+        return None
+
+    # Returns the Door at a given position
+    # There can only ever be one Door at a position so return the first one we find
+    def get_door_at(self, x: int, y: int) -> Optional["Door"]:
+        for door_ in self.doors:
+            if door_.x == x and door_.y == y:
+                return door_
+        return None
+
+    # Returns the Item entities at a given position
+    def get_items_at(self, x: int, y: int) -> list["ItemEntity"]:
+        return [item_ for item_ in self.items if item_.x == x and item_.y == y]
+
+    # Returns the Terminal at a given position
+    # There can only ever be one Actor at a position so return the first one we find
+    def get_terminal_at(self, x: int, y: int) -> Optional["Terminal"]:
+        for terminal_ in self.terminals:
+            if terminal_.x == x and terminal_.y == y:
+                return terminal_
+        return None
+
+    # Draws all game entities to the screen.
+    def render_all(self, console: tcod.Console) -> None:
+        for entity_ in self.all:
+            entity_.render(console)
+
+    # Called every tick of time to update entities.
+    def update_all(self, game_time: int) -> None:
+        for entity_ in self.all:
+            entity_.update(game_time)
+
+    # Clears and resets all the lists.
+    def reset(self) -> None:
+        self.all = []
+        self.actors = []
+        self.doors = []
+        self.items = []
+
+
+class Entity:
+    # ~~~ STATIC METHODS ~~~
+
+    def __init__(
+            self,
+            x: int,
+            y: int,
+            name: str,
+            desc: str,
+            blocked: bool,
+            graphic: str,
+            color: Optional[tuple[int, int, int]],
+            game_entities_: GameEntities
+    ) -> None:
+        self.x: int = x
+        self.y: int = y
+        self.name: str = name
+        self.desc: str = desc
+        self.graphic: str = graphic
+        self.color: Optional[tuple[int, int, int]] = color
+        self.bgcolor: Optional[tuple[int, int, int]] = None
+        self.blocked: bool = blocked
+        self.game_entities: GameEntities = game_entities_
+        game_entities_.all.append(self)
+
+    # ~~~ PUBLIC METHODS ~~~
+
+    # Draws a game entity to the screen
+    def render(self, console: tcod.Console) -> None:
+        console.print(x=self.x, y=self.y, string=self.graphic, fg=self.color, bg=self.bgcolor)
+
+    def update(self, game_time: int) -> None:
+        pass
+
+    def remove(self) -> None:
+        for entity_ in enumerate(self.game_entities.all):
+            if entity_[1] is self:
+                self.game_entities.all.pop(entity_[0])
+
+
+class Actor(Entity):
 
     # Actors can be performing one of these actions:
     class Actions(Enum):
@@ -48,7 +143,7 @@ class Actor(entity.Entity):
             graphic: str,
             color: tuple[int, int, int],
             game_data: databases.Databases,
-            game_entities_: "game_entities.GameEntities",
+            game_entities_: GameEntities,
             game_interface: interface.Interface
     ) -> None:
         super().__init__(x, y, name, desc, True, graphic, color, game_entities_)
@@ -101,7 +196,7 @@ class Actor(entity.Entity):
         self.action: int = Actor.Actions.NONE
         self.dest_x: int = 0
         self.dest_y: int = 0
-        self.atk_target: Optional[entity.Entity] = None
+        self.atk_target: Optional[Entity] = None
         self.bullet_path: list[tuple[int, int]] = []
 
         # Misc
@@ -120,7 +215,7 @@ class Actor(entity.Entity):
         # This uses the function name stored in self.ai to call one of the AI functions and passes self
         self.ai(self, self.game_entities.actors)
 
-    # Finds the correct a-zA-Z character to assign as an id to a newly acquired item.
+    # Finds the correct a-zA-Z character to assign as an id to a newly acquired items.
     def _get_next_item_id(self) -> str:
         # Item IDs can be a-zA-Z so loop through all ASCII numbers skipping the non-alpha in between.
         for item_id in range(65, 123):
@@ -212,7 +307,7 @@ class Actor(entity.Entity):
 
     # Attempts to open a door.
     def _open_door(self) -> None:
-        target_door: door.Door = self.game_entities.get_door_at(self.action_target_x, self.action_target_y)
+        target_door: Door = self.game_entities.get_door_at(self.action_target_x, self.action_target_y)
         if not target_door.locked:
             target_door.open()
         else:
@@ -222,7 +317,7 @@ class Actor(entity.Entity):
 
     # Attempts to hack a terminal.
     def _hack(self) -> None:
-        target_terminal: terminal.Terminal = self.game_entities.get_terminal_at(
+        target_terminal: Terminal = self.game_entities.get_terminal_at(
             self.action_target_x,
             self.action_target_y
         )
@@ -324,7 +419,7 @@ class Actor(entity.Entity):
 
     # Actually closes the door.
     def _close_door(self) -> None:
-        target_door: door.Door = self.game_entities.get_door_at(self.action_target_x, self.action_target_y)
+        target_door: Door = self.game_entities.get_door_at(self.action_target_x, self.action_target_y)
         target_door.close()
 
     # Actually rests
@@ -332,24 +427,24 @@ class Actor(entity.Entity):
     def _rest(self) -> None:
         pass
 
-    # Actually picks up an item.
+    # Actually picks up an items.
     def _pick_up(self) -> None:
         # Get all items at target and ask which to pick-up
         # For now just pick up first item
-        items: list[item_entity.ItemEntity] = self.game_entities.get_items_at(
+        items_: list[ItemEntity] = self.game_entities.get_items_at(
             self.action_target_x,
             self.action_target_y
         )
-        item_ = items[0].actor_pick_up(self)
+        item = items_[0].actor_pick_up(self)
 
         self.game_interface.message_box.add_msg(
-            f"{self.name} picks up a {item_.name}.", self.game_data.colors["SUCCESS_MSG"]
+            f"{self.name} picks up a {item.name}.", self.game_data.colors["SUCCESS_MSG"]
         )
 
     # ~~~ PUBLIC METHODS ~~~
 
     # Adds an item to the inventory
-    def add_inventory(self, item_: item.Item, amount: int = 1) -> None:
+    def add_inventory(self, item_: items.Item, amount: int = 1) -> None:
         self.inventory.append(dict({"ID": self._get_next_item_id(), "Item": item_, "Amount": amount}))
 
     # Called by anything that wants to damage this actor.
@@ -359,8 +454,8 @@ class Actor(entity.Entity):
             self._play_dead()
 
     # Returns a list of wieldable items from actors inventory.
-    def get_wieldable_items(self) -> [weapon.Weapon]:
-        return [item_ for item_ in self.inventory if isinstance(item_["Item"], weapon.Weapon)]
+    def get_wieldable_items(self) -> [items.Weapon]:
+        return [item_ for item_ in self.inventory if isinstance(item_["Item"], items.Weapon)]
 
     # Calls the appropriate attack function.
     def attempt_atk(
@@ -383,14 +478,14 @@ class Actor(entity.Entity):
         new_y: int = self.y + y
 
         # We want to check what entites are occupying the move destination
-        dest_entities: list[entity.Entity] = self.game_entities.get_all_at(new_x, new_y)
+        dest_entities: list[Entity] = self.game_entities.get_all_at(new_x, new_y)
         for dest_entity in dest_entities:
             # Check to see if destination has an Actor, if so perform melee attack
             if isinstance(dest_entity, Actor):
                 self.attempt_atk(new_x, new_y)
-            elif isinstance(dest_entity, door.Door) and not dest_entity.opened:
+            elif isinstance(dest_entity, Door) and not dest_entity.opened:
                 self._set_action(self.Actions.OPEN_DOOR, self.gen_speed, new_x, new_y)
-            elif isinstance(dest_entity, terminal.Terminal):
+            elif isinstance(dest_entity, Terminal):
                 self._set_action(self.Actions.HACK, self.hack_speed, new_x, new_y)
 
             # Prevent from moving into blocked entity.
@@ -413,10 +508,10 @@ class Actor(entity.Entity):
             )
 
     # Attempts to wield a new weapon
-    def attempt_wield(self, new_weapon: Optional[item.Item]) -> None:
+    def attempt_wield(self, new_weapon: Optional[items.Item]) -> None:
         # Make sure attempting to wield an actual weapon.
         # Include None because that is fists.
-        if (new_weapon is not None and not isinstance(new_weapon, weapon.Weapon)) and self.is_player:
+        if (new_weapon is not None and not isinstance(new_weapon, items.Weapon)) and self.is_player:
             self.game_interface.message_box.add_msg(
                 f"{self.name} cannot wield a {new_weapon.name}.", self.game_data.colors["ERROR_MSG"]
             )
@@ -431,7 +526,7 @@ class Actor(entity.Entity):
         for x in range(-1, 2):
             for y in range(-1, 2):
                 if x != 0 or y != 0:
-                    target_door: door.Door = self.game_entities.get_door_at(self.x + x, self.y + y)
+                    target_door: Door = self.game_entities.get_door_at(self.x + x, self.y + y)
                     if target_door is not None and target_door.opened:
                         self._set_action(self.Actions.CLOSE_DOOR, self.gen_speed, target_door.x, target_door.y)
                         return
@@ -463,3 +558,256 @@ class Actor(entity.Entity):
             if self.action_delay == 0:
                 self._do_action()
                 self._reset_action()
+
+
+# This is a small class since the player mostly shares characteristics with other actors except a few things.
+class Player(Actor):
+    def __init__(
+            self,
+            name: str,
+            race: str,
+            class_name: str,
+            desc: str,
+            x: int,
+            y: int,
+            health: int,
+            muscle: int,
+            smarts: int,
+            reflexes: int,
+            wits: int,
+            grit: int,
+            graphic: str,
+            color: tuple[int, int, int],
+            game_data: databases.Databases,
+            game_entities_: GameEntities,
+            game_interface: interface.Interface
+    ) -> None:
+        super().__init__(name, race, class_name, desc, x, y, health, muscle, smarts, reflexes, wits, grit,
+                         None, True, graphic, color, game_data, game_entities_, game_interface)
+        self.examine_target: Any = None
+
+
+class Turret(Actor):
+    def __init__(
+            self,
+            x: int,
+            y: int,
+            game_data: databases.Databases,
+            game_entities_: GameEntities,
+            game_interface: interface.Interface
+    ):
+        self.turret_data: dict = game_data.npcs["Turret"]
+
+        super().__init__(
+            self.turret_data["Name"],
+            self.turret_data["Race"],
+            self.turret_data["Class"],
+            self.turret_data["Description"],
+            x,
+            y,
+            100,
+            self.turret_data["Muscle"],
+            self.turret_data["Smarts"],
+            self.turret_data["Reflexes"],
+            self.turret_data["Wits"],
+            self.turret_data["Grit"],
+            self.turret_data["Name"],
+            False,
+            self.turret_data["Graphic"],
+            self.turret_data["Color"],
+            game_data,
+            game_entities_,
+            game_interface
+        )
+
+        self.game_entities.turrets.append(self)
+
+
+class ItemEntity(Entity):
+    # ~~~ PRIVATE METHODS ~~~
+
+    def __init__(
+            self,
+            x: int,
+            y: int,
+            name: str,
+            desc: str,
+            graphic: str,
+            color: tuple[int, int, int],
+            item_: items.Item,
+            game_entities_: GameEntities
+    ) -> None:
+        super().__init__(x, y, name, desc, False, graphic, color, game_entities_)
+        self.item: items.Item = item_
+        game_entities_.items.append(self)
+
+    # ~~~ PUBLIC METHODS ~~~
+
+    def actor_pick_up(self, actor_: Actor) -> items.Item:
+        actor_.add_inventory(self.item, 1)
+        self.remove()
+
+        return self.item
+
+    def remove(self) -> None:
+        game_items: list[ItemEntity] = self.game_entities.items
+        for item_ in enumerate(game_items):
+            if item_[1] is self:
+                game_items.pop(item_[0])
+
+        super().remove()
+
+
+# Represents static map tiles like floors and walls.
+class Tile(Entity):
+    def __init__(
+            self,
+            x: int,
+            y: int,
+            name: str,
+            desc: str,
+            blocked: bool,
+            graphic: str,
+            color: tuple[int, int, int],
+            game_entities_: GameEntities
+    ) -> None:
+        super().__init__(x, y, name, desc, blocked, graphic, color, game_entities_)
+        game_entities_.tiles.append(self)
+
+
+class Door(Entity):
+    # ~~~ PRIVATE METHODS ~~~
+
+    def __init__(
+            self,
+            x: int,
+            y: int,
+            game_data: databases.Databases,
+            game_entities_: GameEntities
+    ) -> None:
+        tile: dict = game_data.tiles["DOOR_CLOSED"]
+        super().__init__(x, y, tile["Name"], tile["Desc"], tile["Blocked"],
+                         tile["Character"], tile["Color"], game_entities_)
+        self.game_data: databases.Databases = game_data
+        self.opened: bool = False
+        self.locked: bool = False
+        game_entities_.doors.append(self)
+
+    # ~~~ PUBLIC METHODS ~~~
+
+    # Changes the appearance of the door and makes it no longer blocked.
+    def open(self) -> None:
+        self.opened = True
+        self.blocked = False
+        self.graphic = self.game_data.tiles["DOOR_OPEN"]["Character"]
+        self.color = self.game_data.tiles["DOOR_OPEN"]["Color"]
+
+    def close(self) -> None:
+        self.opened = False
+        self.blocked = True
+        self.graphic = self.game_data.tiles["DOOR_CLOSED"]["Character"]
+        self.color = self.game_data.tiles["DOOR_CLOSED"]["Color"]
+
+
+# Terminals can be hacked to do things like:
+# open doors, turn off security cameras, disable turrets and traps, download programs, etc
+# If failed to hack, can do nasty things like sound an alarm, explode, give you a virus, etc
+class Terminal(Entity):
+    class SuccessResult(Enum):
+        DISABLE_CAMS: int = auto(),
+        DISABLE_TURRETS: int = auto(),
+        UNLOCK_DOORS: int = auto()
+
+    class FailResult(Enum):
+        SOUND_ALARM: int = auto(),
+        EXPLODE: int = auto()
+
+    def __init__(
+            self,
+            x: int,
+            y: int,
+            game_data: databases.Databases,
+            game_entities_: GameEntities,
+            game_interface: interface.Interface
+    ) -> None:
+        tile: dict = game_data.tiles["TERMINAL"]
+        super().__init__(x, y, tile["Name"], tile["Desc"], tile["Blocked"],
+                         tile["Character"], tile["Color"], game_entities_)
+
+        self.game_data: databases.Databases = game_data
+        self.game_interface: interface.Interface = game_interface
+
+        self.difficulty: int = 0
+        self.success_results: list[int] = []
+        self.fail_results: list[int] = []
+        self._choose_results()
+
+        game_entities_.terminals.append(self)
+
+    # This will decide randomly which and how many success/fail results to generate for this terminal.
+    # The number of success will increase difficulty and the higher the difficulty the more number of fails.
+    def _choose_results(self) -> None:
+        self.success_results.append(self.SuccessResult.UNLOCK_DOORS)
+        self.fail_results.append(self.FailResult.SOUND_ALARM)
+        self.difficulty = 5
+
+    def _unlock_doors(self) -> None:
+        for door in self.game_entities.doors:
+            door.locked = False
+
+        self.game_interface.message_box.add_msg(
+            f"All doors unlocked.", self.game_data.colors["SYS_MSG"]
+        )
+
+    def _sound_alarm(self) -> None:
+        self.game_interface.message_box.add_msg(
+            f"Alarms sounded.", self.game_data.colors["SYS_MSG"]
+        )
+
+    # What happens when successfully hacked.
+    def _success_hack(self, actor_: Actor) -> None:
+        self.game_interface.message_box.add_msg(
+            f"{actor_.name} successfully hacks the terminal.", self.game_data.colors["SUCCESS_MSG"]
+        )
+
+        for result in self.success_results:
+            if result == self.SuccessResult.UNLOCK_DOORS:
+                self._unlock_doors()
+
+    # What happens when unsuccessfully hacked.
+    def _fail_hack(self, actor_: Actor) -> None:
+        self.game_interface.message_box.add_msg(
+            f"{actor_.name} fails to hack the terminal.", self.game_data.colors["BAD_MSG"]
+        )
+
+        for result in self.fail_results:
+            if result == self.FailResult.SOUND_ALARM:
+                self._sound_alarm()
+
+    # Called by an actor that wants to attempt to hack the terminal.
+    def attempt_hack(self, actor_: Actor) -> None:
+        if actor_.hacking_skill > self.difficulty:
+            self._success_hack(actor_)
+        else:
+            self._fail_hack(actor_)
+
+
+class Camera(Entity):
+    def __init__(
+            self,
+            x: int,
+            y: int,
+            game_data: databases.Databases,
+            game_entities_: GameEntities
+    ) -> None:
+        tile: dict = game_data.tiles["CAMERA"]
+        super().__init__(x, y, tile["Name"], tile["Desc"],
+                         tile["Blocked"], tile["Character"], tile["Color"], game_entities_)
+
+        self.fov = []
+
+        self._compute_fov()
+        self.game_entities.cameras.append(self)
+
+    def _compute_fov(self) -> None:
+        pass

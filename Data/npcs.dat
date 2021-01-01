@@ -14,5 +14,21 @@
 		"Graphic": "M",
 		"Color": [255, 255, 0],
 		"AI": "smart_melee"
+	},
+	"TURRET":
+	{
+		"Name": "Turret",
+		"Description": "The best automated defense system money can buy.",
+		"Race": "Machine",
+		"Class": "Turret",
+		"Muscle": 0,
+		"Reflexes": 20,
+		"Grit": 0,
+		"Smarts": 0,
+		"Charm": 0,
+		"Wits": 0,
+		"Graphic": "&",
+		"Color": [0, 255, 255],
+		"AI": "turret"
 	}
 }

@@ -1,6 +1,6 @@
 from typing import Optional, Union, Any
 import tcod
-import actor
+import entities
 
 
 class Interface:
@@ -83,7 +83,7 @@ class Interface:
             self.x: int = x
             self.y: int = y
 
-        def render(self, console: tcod.Console, actor_: "actor.Actor") -> None:
+        def render(self, console: tcod.Console, actor_: "entities.Actor") -> None:
             console.print(
                 self.x,
                 self.y,
@@ -114,7 +114,7 @@ class Interface:
             self.height: int = height
 
             # The actor whos stats appear here.
-            self.actor: Optional["actor.Actor"] = None
+            self.actor: Optional["entities.Actor"] = None
 
             self.floor: int = 1
             self.time: int = 0
@@ -122,8 +122,8 @@ class Interface:
         # ~~~ PUBLIC METHODS ~~~
 
         # Sets the actor whos stats we want to show up.
-        def set_actor(self, actor_: "actor.Actor") -> None:
-            self.actor: "actor.Actor" = actor_
+        def set_actor(self, actor_: "entities.Actor") -> None:
+            self.actor: "entities.Actor" = actor_
 
         def update(self, time: int, floor: int) -> None:
             self.time: int = time
