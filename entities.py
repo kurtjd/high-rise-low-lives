@@ -4,6 +4,7 @@ import tcod
 import databases
 import interface
 import items
+import ai
 
 
 class GameEntities:
@@ -16,6 +17,8 @@ class GameEntities:
         self.items:  list[ItemEntity] = []
         self.terminals:  list[Terminal] = []
         self.cameras:  list[Camera] = []
+        self.vents: list[Vent] = []
+        self.player: Optional[Player] = None
 
     # Returns a list of entities at a given position
     def get_all_at(self, x: int, y: int) -> list["Entity"]:
@@ -49,6 +52,14 @@ class GameEntities:
                 return terminal_
         return None
 
+    # Returns the Vent at a given position
+    # There can only ever be one Vent at a position so return the first one we find
+    def get_vent_at(self, x: int, y: int) -> Optional["Vent"]:
+        for vent_ in self.vents:
+            if vent_.x == x and vent_.y == y:
+                return vent_
+        return None
+
     # Draws all game entities to the screen.
     def render_all(self, console: tcod.Console) -> None:
         for entity_ in self.all:
@@ -56,8 +67,10 @@ class GameEntities:
 
     # Called every tick of time to update entities.
     def update_all(self, game_time: int) -> None:
-        for entity_ in self.all:
-            entity_.update(game_time)
+        for actor_ in self.actors:
+            actor_.update(game_time)
+        for vent_ in self.vents:
+            vent_.update(game_time)
 
     # Clears and resets all the lists.
     def reset(self) -> None:
@@ -65,6 +78,21 @@ class GameEntities:
         self.actors = []
         self.doors = []
         self.items = []
+
+    # Reveals the vents and hides everything else.
+    def show_vents(self):
+        for entity in self.all:
+            if isinstance(entity, Vent) or isinstance(entity, Player):
+                entity.visible = True
+            else:
+                entity.visible = False
+
+    def hide_vents(self):
+        for entity in self.all:
+            if isinstance(entity, Vent) and not entity.entrance:
+                entity.visible = False
+            else:
+                entity.visible = True
 
 
 class Entity:
@@ -79,7 +107,8 @@ class Entity:
             blocked: bool,
             graphic: str,
             color: Optional[tuple[int, int, int]],
-            game_entities_: GameEntities
+            game_entities_: GameEntities,
+            visible: bool = True
     ) -> None:
         self.x: int = x
         self.y: int = y
@@ -89,14 +118,19 @@ class Entity:
         self.color: Optional[tuple[int, int, int]] = color
         self.bgcolor: Optional[tuple[int, int, int]] = None
         self.blocked: bool = blocked
+        self.visible: bool = visible
         self.game_entities: GameEntities = game_entities_
+
+        self.noise_level: int = 0
+
         game_entities_.all.append(self)
 
     # ~~~ PUBLIC METHODS ~~~
 
     # Draws a game entity to the screen
     def render(self, console: tcod.Console) -> None:
-        console.print(x=self.x, y=self.y, string=self.graphic, fg=self.color, bg=self.bgcolor)
+        if self.visible:
+            console.print(x=self.x, y=self.y, string=self.graphic, fg=self.color, bg=self.bgcolor)
 
     def update(self, game_time: int) -> None:
         pass
@@ -105,6 +139,9 @@ class Entity:
         for entity_ in enumerate(self.game_entities.all):
             if entity_[1] is self:
                 self.game_entities.all.pop(entity_[0])
+
+    def make_noise(self, noise_radius: int):
+        self.noise_level = noise_radius
 
 
 class Actor(Entity):
@@ -138,7 +175,7 @@ class Actor(Entity):
             reflexes: int,
             wits: int,
             grit: int,
-            ai: Optional[Callable[..., None]],
+            ai_: Optional[Callable[..., None]],
             is_player: bool,
             graphic: str,
             color: tuple[int, int, int],
@@ -154,7 +191,7 @@ class Actor(Entity):
         self.is_player: bool = is_player
 
         # This contains a function name corresponding to one of the AI functions in ai.py
-        self.ai: Callable[[Actor, list[Actor]], None] = ai
+        self.ai: Callable[[Actor, list[Actor]], None] = ai_
 
         # Attributes
         self.health: int = health
@@ -205,7 +242,7 @@ class Actor(Entity):
 
         # If not the player, set a default action. For now, just rest.
         if not is_player:
-            self._set_action(self.Actions.REST, 0)
+            self._set_action(self.Actions.REST, 1)
 
         game_entities_.actors.append(self)
 
@@ -236,6 +273,10 @@ class Actor(Entity):
         self.graphic = self.game_data.tiles["CORPSE"]["Character"]
         self.color = self.game_data.tiles["CORPSE"]["Color"]
         self.blocked = self.game_data.tiles["CORPSE"]["Blocked"]
+
+        # Just quit the game for now to prevent crash.
+        if self.is_player:
+            raise SystemExit()
 
     # Recovers stats
     def _recover(self) -> None:
@@ -276,7 +317,7 @@ class Actor(Entity):
         elif self.action == self.Actions.ATK_RANGED:
             self._attack_ranged()
         elif self.action == self.Actions.MOVE:
-            self._move()
+            self.move()
         elif self.action == self.Actions.OPEN_DOOR:
             self._open_door()
         elif self.action == self.Actions.CLOSE_DOOR:
@@ -292,7 +333,7 @@ class Actor(Entity):
 
     # ~~~ ACTION METHODS ~~~
     # Moves to a new position.
-    def _move(self) -> None:
+    def move(self) -> None:
         # We need to check again that the destination isn't blocked in case something moved there in the meantime.
         for dest_entity in self.game_entities.get_all_at(self.dest_x, self.dest_y):
             if dest_entity.blocked:
@@ -447,6 +488,24 @@ class Actor(Entity):
     def add_inventory(self, item_: items.Item, amount: int = 1) -> None:
         self.inventory.append(dict({"ID": self._get_next_item_id(), "Item": item_, "Amount": amount}))
 
+    # Uses the bresenham line algorithm to get a list of points on the map the bullet would pass through.
+    def set_bullet_path(self, x2: int, y2: int) -> None:
+        # Extend the bullet path beyond where actor selected using slope of line.
+        expand_x: int = x2 + ((x2 - self.x) * 20)
+        expand_y: int = y2 + ((y2 - self.y) * 20)
+
+        # Disclude the actor from the bullet path.
+        path: list[tuple[int, int]] = tcod.los.bresenham((self.x, self.y), (expand_x, expand_y)).tolist()[1:]
+
+        # Check each point in the path for a blocked entity. If so, stop the bullet path there.
+        new_path: list[tuple[int, int]] = []
+        for point in path:
+            new_path.append(point)
+            self.bullet_path = new_path
+            for entity in self.game_entities.get_all_at(point[0], point[1]):
+                if entity.blocked:
+                    return
+
     # Called by anything that wants to damage this actor.
     def take_damage(self, amount: int) -> None:
         self.health -= amount
@@ -487,6 +546,8 @@ class Actor(Entity):
                 self._set_action(self.Actions.OPEN_DOOR, self.gen_speed, new_x, new_y)
             elif isinstance(dest_entity, Terminal):
                 self._set_action(self.Actions.HACK, self.hack_speed, new_x, new_y)
+            elif isinstance(dest_entity, Vent) and not self.is_player:
+                return  # Don't let NPCs follow player into vents
 
             # Prevent from moving into blocked entity.
             if dest_entity.blocked:
@@ -584,7 +645,46 @@ class Player(Actor):
     ) -> None:
         super().__init__(name, race, class_name, desc, x, y, health, muscle, smarts, reflexes, wits, grit,
                          None, True, graphic, color, game_data, game_entities_, game_interface)
+
         self.examine_target: Any = None
+        self.in_vents: bool = False
+
+        game_entities_.player = self
+
+    def move(self) -> None:
+        super().move()
+
+        # If the player moves into or out of vents, change what is visible.
+        vent: Vent = self.game_entities.get_vent_at(self.x, self.y)
+        if vent is not None:
+            if not self.in_vents:
+                self.game_entities.show_vents()
+                self.in_vents = True
+            elif vent.entrance:
+                self.game_entities.hide_vents()
+                self.in_vents = False
+        elif self.in_vents:
+            self.game_entities.hide_vents()
+            self.in_vents = False
+
+    def attempt_move(self, x: int, y: int) -> None:
+        # The destination the player is attempting to move to
+        new_x: int = self.x + x
+        new_y: int = self.y + y
+
+        # If the player is in the vents, FUCKFUCK
+        # Make so player can move through blocked entities if in vents.
+        vent_to: Vent = self.game_entities.get_vent_at(new_x, new_y)
+        vent_on: Vent = self.game_entities.get_vent_at(self.x, self.y)
+
+        if self.in_vents and vent_to is None and vent_on is not None and not vent_on.entrance:
+            return
+
+        if not self.in_vents and\
+                ((vent_to is not None and not vent_to.entrance) and (vent_on is None or not vent_on.entrance)):
+            return
+
+        super().attempt_move(x, y)
 
 
 class Turret(Actor):
@@ -596,7 +696,9 @@ class Turret(Actor):
             game_entities_: GameEntities,
             game_interface: interface.Interface
     ):
-        self.turret_data: dict = game_data.npcs["Turret"]
+        self.turret_data: dict = game_data.npcs["TURRET"]
+        self.disabled: bool = False
+        self.friendly_fire: bool = False
 
         super().__init__(
             self.turret_data["Name"],
@@ -611,7 +713,7 @@ class Turret(Actor):
             self.turret_data["Reflexes"],
             self.turret_data["Wits"],
             self.turret_data["Grit"],
-            self.turret_data["Name"],
+            ai.turret,
             False,
             self.turret_data["Graphic"],
             self.turret_data["Color"],
@@ -669,10 +771,44 @@ class Tile(Entity):
             blocked: bool,
             graphic: str,
             color: tuple[int, int, int],
-            game_entities_: GameEntities
+            game_entities_: GameEntities,
+            visible: bool = True
     ) -> None:
-        super().__init__(x, y, name, desc, blocked, graphic, color, game_entities_)
+        super().__init__(x, y, name, desc, blocked, graphic, color, game_entities_, visible)
         game_entities_.tiles.append(self)
+
+
+class Vent(Tile):
+    def __init__(
+            self,
+            x: int,
+            y: int,
+            game_data: databases.Databases,
+            game_entities_: GameEntities,
+            entrance: bool = False
+    ) -> None:
+        self.entrance: bool = entrance
+        visible: bool = True
+        tile: dict
+        if self.entrance:
+            tile = game_data.tiles["VENT_ENTER"]
+        else:
+            tile = game_data.tiles["VENT"]
+            visible = False
+
+        super().__init__(
+            x,
+            y,
+            tile["Name"],
+            tile["Desc"],
+            tile["Blocked"],
+            tile["Character"],
+            tile["Color"],
+            game_entities_,
+            visible
+        )
+
+        game_entities_.vents.append(self)
 
 
 class Door(Entity):
@@ -760,6 +896,7 @@ class Terminal(Entity):
         )
 
     def _sound_alarm(self) -> None:
+        self.make_noise(50)
         self.game_interface.message_box.add_msg(
             f"Alarms sounded.", self.game_data.colors["SYS_MSG"]
         )

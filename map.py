@@ -32,6 +32,10 @@ class Map:
             new_tile = self.game_data.tiles["WALL_COR_BL"]
         elif char == '#':
             new_tile = self.game_data.tiles["HALL"]
+        elif char == ':':
+            new_tile = self.game_data.tiles["VENT_ENTER"]
+        elif char == '"':
+            new_tile = self.game_data.tiles["VENT"]
         elif char == '+':
             new_tile = self.game_data.tiles["DOOR_CLOSED"]
         else:
@@ -39,6 +43,10 @@ class Map:
 
         if char == '+':
             new_entity = entities.Door(x, y, self.game_data, entities_)
+        elif char == ':':
+            new_entity = entities.Vent(x, y, self.game_data, entities_, True)
+        elif char == '"':
+            new_entity = entities.Vent(x, y, self.game_data, entities_)
         else:
             new_entity = entities.Tile(x, y, new_tile["Name"], new_tile["Desc"], new_tile["Blocked"],
                                        new_tile["Character"], new_tile["Color"], entities_)

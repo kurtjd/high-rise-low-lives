@@ -399,39 +399,25 @@ class SelectTargetState(SelectState):
             player_: entities.Player
     ) -> None:
         super().__init__(fsm, entities_, game_interface, player_)
-        self.bullet_path: list[tuple[int, int]] = []
 
     def enter(self) -> None:
-        self.bullet_path = []
+        self.player.bullet_path = []
         super().enter()
-
-    # Uses the bresenham line algorithm to get a list of points on the map the bullet would pass through.
-    def _set_bullet_path(self, x1: int, y1: int, x2: int, y2: int) -> None:
-        path = tcod.los.bresenham((x1, y1), (x2, y2)).tolist()[1:]  # Disclude the player from the bullet path.
-        new_path: list[tuple[int, int]] = []
-
-        # Check each point in the path for a blocked entity. If so, stop the bullet path there.
-        for point in path:
-            new_path.append(point)
-            self.bullet_path = new_path
-            for entity in self.entities.get_all_at(point[0], point[1]):
-                if entity.blocked:
-                    return
 
     def handle_rendering(self, console: tcod.Console) -> None:
         super().handle_rendering(console)
 
-        for point in self.bullet_path:
+        for point in self.player.bullet_path:
             console.print(point[0], point[1], '*', tcod.red)
 
     def handle_input(self, event: tcod.event) -> None:
         key: int = event.sym
 
         self.move_cursor(key)
-        self._set_bullet_path(self.player.x, self.player.y, self.select_x, self.select_y)
+        self.player.set_bullet_path(self.select_x, self.select_y)
 
         if key == tcod.event.K_RETURN:
-            self.player.attempt_atk(self.select_x, self.select_y, True, self.bullet_path)
+            self.player.attempt_atk(self.select_x, self.select_y, True, self.player.bullet_path)
             self.fsm.reverse_state()
 
     def handle_updates(self) -> None:

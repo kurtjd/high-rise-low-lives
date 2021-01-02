@@ -78,7 +78,7 @@ def spawn_enemies(
         entities__: entities.GameEntities,
         game_interface_: interface.Interface
 ) -> None:
-    enemy: entities.Actor = entities.Actor(
+    enemy1: entities.Actor = entities.Actor(
         "Rent-a-Cop",
         "Human",
         "Brawler",
@@ -94,19 +94,51 @@ def spawn_enemies(
         ai.smart_melee,
         False,
         'C',
-        tcod.yellow,
+        tcod.blue,
         game_data_,
         entities__,
         game_interface_
     )
-    enemy.add_inventory(items.Weapon(
+    enemy1.add_inventory(items.Weapon(
         game_data_.weapons["BATON"]["Name"],
         game_data_.weapons["BATON"]["Description"],
         game_data_.weapons["BATON"]["Damage"],
         game_data_.weapons["BATON"]["Speed"],
         game_data_.weapons["BATON"]["Accuracy"]
     ))
-    enemy.attempt_wield(enemy.inventory[0]["Item"])
+    enemy1.attempt_wield(enemy1.inventory[0]["Item"])
+
+    enemy2: entities.Actor = entities.Actor(
+        "Mercenary",
+        "Human",
+        "Gunslinger",
+        "Hobbies include long walks on the beach and killing for money.",
+        24,
+        20,
+        100,
+        12,
+        15,
+        20,
+        15,
+        11,
+        ai.smart_ranged,
+        False,
+        'M',
+        tcod.yellow,
+        game_data_,
+        entities__,
+        game_interface_
+    )
+    enemy2.add_inventory(items.Weapon(
+        game_data_.weapons["TEC9"]["Name"],
+        game_data_.weapons["TEC9"]["Description"],
+        game_data_.weapons["TEC9"]["Damage"],
+        game_data_.weapons["TEC9"]["Speed"],
+        game_data_.weapons["TEC9"]["Accuracy"]
+    ))
+    enemy2.attempt_wield(enemy2.inventory[0]["Item"])
+
+    entities.Turret(46, 6, game_data_, entities__, game_interface_)
 
 
 def spawn_items(weapons: dict, entities__: entities.GameEntities) -> None:
@@ -184,6 +216,7 @@ spawn_items(GAME_DATA.weapons, entities_)
 spawn_enemies(GAME_DATA, entities_, game_interface)
 spawn_terminals(GAME_DATA, entities_, game_interface)
 spawn_cameras(GAME_DATA, entities_)
+entities_.doors[1].locked = True  # Just lock an arbitrary door as a test.
 
 # Init player last so they are rendered last.
 player: entities.Player = init_player(GAME_DATA, entities_, game_interface)

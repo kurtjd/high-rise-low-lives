@@ -23,6 +23,22 @@
 		"Color": [0, 255, 0],
 		"Blocked": false
 	},
+	"VENT_ENTER":
+	{
+		"Name": "Vent Entrance",
+		"Desc": "Where could it go?",
+		"Character": 35,
+		"Color": [211, 211, 211],
+		"Blocked": false
+	},
+	"VENT":
+	{
+		"Name": "Vent",
+		"Desc": "Surprisingly not so claustrophobic.",
+		"Character": 9617,
+		"Color": [128, 128, 128],
+		"Blocked": false
+	},
 	"DOOR_CLOSED":
 	{
 		"Name": "Door",
