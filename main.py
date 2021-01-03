@@ -83,8 +83,8 @@ def spawn_enemies(
         "Human",
         "Brawler",
         "A poor man paid nearly nothing to patrol the lower levels of the High-Rise.",
-        23,
-        18,
+        35,
+        15,
         100,
         12,
         15,
@@ -113,8 +113,8 @@ def spawn_enemies(
         "Human",
         "Gunslinger",
         "Hobbies include long walks on the beach and killing for money.",
-        24,
-        20,
+        36,
+        22,
         100,
         12,
         15,
@@ -141,9 +141,14 @@ def spawn_enemies(
     entities.Turret(46, 6, game_data_, entities__, game_interface_)
 
 
-def spawn_items(weapons: dict, entities__: entities.GameEntities) -> None:
+def spawn_items(
+        weapons: dict,
+        game_data_: databases.Databases,
+        entities__: entities.GameEntities,
+        game_interface_: interface.Interface
+) -> None:
     entities.ItemEntity(
-        19,
+        22,
         20,
         weapons["SAMURAI_SWORD"]["Name"],
         weapons["SAMURAI_SWORD"]["Description"],
@@ -156,11 +161,13 @@ def spawn_items(weapons: dict, entities__: entities.GameEntities) -> None:
             weapons["SAMURAI_SWORD"]["Speed"],
             weapons["SAMURAI_SWORD"]["Accuracy"]
         ),
-        entities__
+        game_data_,
+        entities__,
+        game_interface_
     )
 
     entities.ItemEntity(
-        18,
+        23,
         20,
         weapons["TEC9"]["Name"],
         weapons["TEC9"]["Description"],
@@ -173,7 +180,9 @@ def spawn_items(weapons: dict, entities__: entities.GameEntities) -> None:
             weapons["TEC9"]["Speed"],
             weapons["TEC9"]["Accuracy"]
         ),
-        entities__
+        game_data_,
+        entities__,
+        game_interface_
     )
 
 
@@ -185,8 +194,13 @@ def spawn_terminals(
     entities.Terminal(60, 19, game_data_, entities__, game_interface_)
 
 
-def spawn_cameras(game_data_: databases.Databases, entities__: entities.GameEntities) -> None:
-    entities.Camera(58, 16, game_data_, entities__)
+def spawn_cameras(
+        game_data_: databases.Databases,
+        entities__: entities.GameEntities,
+        game_interface_: interface.Interface
+) -> None:
+    entities.Camera(58, 16, game_data_, entities__, game_interface_)
+    entities.Camera(30, 11, game_data_, entities__, game_interface_)
 
 
 # Game Constants
@@ -204,18 +218,18 @@ root_console: tcod.Console
 
 entities_: entities.GameEntities = entities.GameEntities()
 
-# Generate map (for now read from file, will be randomly generated)
-# Initialize first so that it is drawn on bottom
-game_map: map.Map = map.Map(GAME_DATA)
-game_map.read_map("Maps/game_map.txt", entities_)
-
 game_interface: interface.Interface = init_interface(GAME_DATA.colors)
 
+# Generate map (for now read from file, will be randomly generated)
+# Initialize first so that it is drawn on bottom
+game_map: map.Map = map.Map(GAME_DATA, entities_, game_interface)
+game_map.read_map("Maps/game_map.txt")
+
 # THESE ARE TEMPORARY, JUST HERE FOR SOMETHING TO TEST
-spawn_items(GAME_DATA.weapons, entities_)
+spawn_items(GAME_DATA.weapons, GAME_DATA, entities_, game_interface)
 spawn_enemies(GAME_DATA, entities_, game_interface)
 spawn_terminals(GAME_DATA, entities_, game_interface)
-spawn_cameras(GAME_DATA, entities_)
+spawn_cameras(GAME_DATA, entities_, game_interface)
 entities_.doors[1].locked = True  # Just lock an arbitrary door as a test.
 
 # Init player last so they are rendered last.

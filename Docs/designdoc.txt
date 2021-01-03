@@ -17,7 +17,7 @@ Gameplay-features:
 *"Spell"-casting explained by modification of source-code of reality.
 *"Spells" are instead programs.
 *Stealth combat.
-*Computers can be hacked for various purposes: unlock doors, download programs, turn off security measures, cause explosions, view security cameras.
+*Terminals can be hacked for various purposes: unlock doors, download programs, turn off security measures, cause explosions, view security cameras (which reveals floor and enemy locations).
 *Traps, such as security cameras notifying guards and sounding alarms.
 *Traps can be hacked, destroyed, or sneaked by.
 *Vents can be used to sneak around enemies and access locked areas.
@@ -34,6 +34,7 @@ Gameplay-features:
 *Simple time travel mechanic through technomancy.
 *Different floor themes like residential area full of gang members and other criminals.
 *In actor description state what actor is doing.
+*Make cameras recalculate FOV only on certain actions to prevent lag thus allowing player block fov
 
 Races:
 Human: Completely natural, unable to be augmented but no need to charge.

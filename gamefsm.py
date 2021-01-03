@@ -414,7 +414,7 @@ class SelectTargetState(SelectState):
         key: int = event.sym
 
         self.move_cursor(key)
-        self.player.set_bullet_path(self.select_x, self.select_y)
+        self.player.bullet_path = self.player.get_line_of_sight(self.select_x, self.select_y, True)
 
         if key == tcod.event.K_RETURN:
             self.player.attempt_atk(self.select_x, self.select_y, True, self.player.bullet_path)

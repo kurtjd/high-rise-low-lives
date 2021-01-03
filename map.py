@@ -1,11 +1,19 @@
 import databases
 import entities
+import interface
 
 
 class Map:
-    def __init__(self, game_data: databases.Databases) -> None:
+    def __init__(
+            self,
+            game_data: databases.Databases,
+            game_entities: entities.GameEntities,
+            game_interface: interface.Interface
+    ) -> None:
         # self.map = []
         self.game_data: databases.Databases = game_data
+        self.game_entities: entities.GameEntities = game_entities
+        self.game_interface: interface.Interface = game_interface
 
     # Converts a character from a map file into a game entity.
     def _char_to_entity(
@@ -13,7 +21,6 @@ class Map:
             char: str,
             x: int,
             y: int,
-            entities_: entities.GameEntities
     ) -> entities.Entity:
         new_tile: dict
         if char == '.':
@@ -42,18 +49,28 @@ class Map:
             new_tile = self.game_data.tiles["BLANK"]
 
         if char == '+':
-            new_entity = entities.Door(x, y, self.game_data, entities_)
+            new_entity = entities.Door(x, y, self.game_data, self.game_entities, self.game_interface)
         elif char == ':':
-            new_entity = entities.Vent(x, y, self.game_data, entities_, True)
+            new_entity = entities.Vent(x, y, self.game_data, self.game_entities, self.game_interface, True)
         elif char == '"':
-            new_entity = entities.Vent(x, y, self.game_data, entities_)
+            new_entity = entities.Vent(x, y, self.game_data, self.game_entities, self.game_interface)
         else:
-            new_entity = entities.Tile(x, y, new_tile["Name"], new_tile["Desc"], new_tile["Blocked"],
-                                       new_tile["Character"], new_tile["Color"], entities_)
+            new_entity = entities.Tile(
+                x,
+                y,
+                new_tile["Name"],
+                new_tile["Desc"],
+                new_tile["Blocked"],
+                new_tile["Character"],
+                new_tile["Color"],
+                self.game_data,
+                self.game_entities,
+                self.game_interface
+            )
         return new_entity
 
     # Reads a map from a text file.
-    def read_map(self, file: str, entities_: entities.GameEntities) -> None:
+    def read_map(self, file: str) -> None:
         map_file = open(file)
         map_lines = map_file.readlines()
 
@@ -62,5 +79,5 @@ class Map:
             for x in enumerate(y[1]):
                 if x[1] != '\n':
                     # new_entity =
-                    self._char_to_entity(x[1], x[0], y[0], entities_)
+                    self._char_to_entity(x[1], x[0], y[0])
                     # self.map[y[0]].append(new_entity)
