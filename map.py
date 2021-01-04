@@ -45,6 +45,8 @@ class Map:
             new_tile = self.game_data.tiles["VENT"]
         elif char == '+':
             new_tile = self.game_data.tiles["DOOR_CLOSED"]
+        elif char == '_':
+            new_tile = self.game_data.tiles["DESK"]
         else:
             new_tile = self.game_data.tiles["BLANK"]
 
@@ -65,7 +67,8 @@ class Map:
                 new_tile["Color"],
                 self.game_data,
                 self.game_entities,
-                self.game_interface
+                self.game_interface,
+                new_tile["Cover Percent"]
             )
         return new_entity
 

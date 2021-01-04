@@ -5,6 +5,7 @@
 		"Desc": "This is nothing.",
 		"Character": 32,
 		"Color": [0, 255, 0],
+		"Cover Percent": 100,
 		"Blocked": true
 	},
 	"FLOOR":
@@ -13,6 +14,7 @@
 		"Desc": "The floor.",
 		"Character": 46,
 		"Color": [0, 255, 0],
+		"Cover Percent": 0,
 		"Blocked": false
 	},
 	"HALL":
@@ -21,6 +23,7 @@
 		"Desc": "This is a hallway.",
 		"Character": 9617,
 		"Color": [0, 255, 0],
+		"Cover Percent": 0,
 		"Blocked": false
 	},
 	"VENT_ENTER":
@@ -29,6 +32,7 @@
 		"Desc": "Where could it go?",
 		"Character": 35,
 		"Color": [211, 211, 211],
+		"Cover Percent": 0,
 		"Blocked": false
 	},
 	"VENT":
@@ -37,6 +41,7 @@
 		"Desc": "Surprisingly not so claustrophobic.",
 		"Character": 9617,
 		"Color": [128, 128, 128],
+		"Cover Percent": 0,
 		"Blocked": false
 	},
 	"DOOR_CLOSED":
@@ -45,6 +50,7 @@
 		"Desc": "A closed door.",
 		"Character": 43,
 		"Color": [0, 255, 0],
+		"Cover Percent": 100,
 		"Blocked": true
 	},
 	"DOOR_OPEN":
@@ -53,6 +59,7 @@
 		"Desc": "An open door.",
 		"Character": 45,
 		"Color": [0, 255, 0],
+		"Cover Percent": 0,
 		"Blocked": false
 	},
 	"WALL_HORIZ":
@@ -61,6 +68,7 @@
 		"Desc": "This is a wall.",
 		"Character": 9472,
 		"Color": [0, 255, 0],
+		"Cover Percent": 100,
 		"Blocked": true
 	},
 	"WALL_VERT":
@@ -69,6 +77,7 @@
 		"Desc": "This is a wall.",
 		"Character": 9474,
 		"Color": [0, 255, 0],
+		"Cover Percent": 100,
 		"Blocked": true
 	},
 	"WALL_COR_TL":
@@ -77,6 +86,7 @@
 		"Desc": "This is a wall.",
 		"Character": 9484,
 		"Color": [0, 255, 0],
+		"Cover Percent": 100,
 		"Blocked": true
 	},
 	"WALL_COR_TR":
@@ -85,6 +95,7 @@
 		"Desc": "This is a wall.",
 		"Character": 9488,
 		"Color": [0, 255, 0],
+		"Cover Percent": 100,
 		"Blocked": true
 	},
 	"WALL_COR_BL":
@@ -93,6 +104,7 @@
 		"Desc": "This is a wall.",
 		"Character": 9492,
 		"Color": [0, 255, 0],
+		"Cover Percent": 100,
 		"Blocked": true
 	},
 	"WALL_COR_BR":
@@ -101,12 +113,14 @@
 		"Desc": "This is a wall.",
 		"Character": 9496,
 		"Color": [0, 255, 0],
+		"Cover Percent": 100,
 		"Blocked": true
 	},
 	"CORPSE":
 	{
 		"Character": 37,
 		"Color": [176, 172, 162],
+		"Cover Percent": 0,
 		"Blocked": false
 	},
 	"TERMINAL":
@@ -115,6 +129,16 @@
 		"Desc": "A terminal connecting you to cyberspace.",
 		"Character": 63,
 		"Color": [255, 255, 255],
+		"Cover Percent": 20,
+		"Blocked": true
+	},
+	"DESK":
+	{
+		"Name": "Desk",
+		"Desc": "Where drones get most of their work done.",
+		"Character": 95,
+		"Color": [255, 255, 255],
+		"Cover Percent": 50,
 		"Blocked": true
 	},
 	"CAMERA":
@@ -123,6 +147,16 @@
 		"Desc": "Say cheese!",
 		"Character": 44,
 		"Color": [0, 0, 255],
+		"Cover Percent": 0,
 		"Blocked": true
+	},
+	"TRAP":
+	{
+		"Name": "Trap",
+		"Desc": "Point towards enemy.",
+		"Character": 94,
+		"Color": [128, 0, 128],
+		"Cover Percent": 0,
+		"Blocked": false
 	}
 }

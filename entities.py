@@ -18,43 +18,40 @@ class GameEntities:
         self.items:  list[ItemEntity] = []
         self.terminals:  list[Terminal] = []
         self.cameras:  list[Camera] = []
+        self.traps: list[Trap] = []
         self.vents: list[Vent] = []
         self.player: Optional[Player] = None
 
-    # Returns a list of entities at a given position
     def get_all_at(self, x: int, y: int) -> list["Entity"]:
         return [entity_ for entity_ in self.all if entity_.x == x and entity_.y == y]
 
-    # Returns the Actor at a given position
-    # There can only ever be one Actor at a position so return the first one we find
     def get_actor_at(self, x: int, y: int) -> Optional["Actor"]:
         for actor_ in self.actors:
             if actor_.x == x and actor_.y == y:
                 return actor_
         return None
 
-    # Returns the Door at a given position
-    # There can only ever be one Door at a position so return the first one we find
     def get_door_at(self, x: int, y: int) -> Optional["Door"]:
         for door_ in self.doors:
             if door_.x == x and door_.y == y:
                 return door_
         return None
 
-    # Returns the Item entities at a given position
     def get_items_at(self, x: int, y: int) -> list["ItemEntity"]:
         return [item_ for item_ in self.items if item_.x == x and item_.y == y]
 
-    # Returns the Terminal at a given position
-    # There can only ever be one Actor at a position so return the first one we find
     def get_terminal_at(self, x: int, y: int) -> Optional["Terminal"]:
         for terminal_ in self.terminals:
             if terminal_.x == x and terminal_.y == y:
                 return terminal_
         return None
 
-    # Returns the Vent at a given position
-    # There can only ever be one Vent at a position so return the first one we find
+    def get_trap_at(self, x: int, y: int) -> Optional["Trap"]:
+        for trap_ in self.traps:
+            if trap_.x == x and trap_.y == y:
+                return trap_
+        return None
+
     def get_vent_at(self, x: int, y: int) -> Optional["Vent"]:
         for vent_ in self.vents:
             if vent_.x == x and vent_.y == y:
@@ -109,6 +106,7 @@ class Entity:
             game_data: databases.Databases,
             game_entities_: GameEntities,
             game_interface: interface.Interface,
+            cover_percent: int = 0,
             visible: bool = True
     ) -> None:
         self.x: int = x
@@ -125,6 +123,7 @@ class Entity:
         self.game_entities: GameEntities = game_entities_
 
         self.noise_level: int = 0
+        self.cover_percent = cover_percent
 
         game_entities_.all.append(self)
 
@@ -159,12 +158,12 @@ class Entity:
         # Disclude the entity from the LOS.
         los: list[tuple[int, int]] = tcod.los.bresenham((self.x, self.y), (end_x, end_y)).tolist()[1:]
 
-        # Check each point in the LOS for a blocked entity. If so, stop the LOS there.
+        # Check each point in the LOS if it's 100% cover (basically meaning it's a wall). If so, stop the LOS there.
         final_los: list[tuple[int, int]] = []
         for point in los:
             final_los.append(point)
             for entity in self.game_entities.get_all_at(point[0], point[1]):
-                if entity.blocked:
+                if entity.cover_percent == 100:
                     return final_los
 
         return final_los
@@ -209,7 +208,7 @@ class Actor(Entity):
             game_entities_: GameEntities,
             game_interface: interface.Interface
     ) -> None:
-        super().__init__(x, y, name, desc, True, graphic, color, game_data, game_entities_, game_interface)
+        super().__init__(x, y, name, desc, True, graphic, color, game_data, game_entities_, game_interface, 100)
 
         # Descriptors
         self.race: str = race
@@ -356,21 +355,6 @@ class Actor(Entity):
         elif self.action == self.Actions.HACK:
             self._hack()
 
-    # ~~~ ACTION METHODS ~~~
-    # Moves to a new position.
-    def move(self) -> None:
-        # We need to check again that the destination isn't blocked in case something moved there in the meantime.
-        for dest_entity in self.game_entities.get_all_at(self.dest_x, self.dest_y):
-            if dest_entity.blocked:
-                if self.is_player:
-                    self.game_interface.message_box.add_msg(
-                        f"{self.name} slams into something.", self.game_data.colors["ERROR_MSG"]
-                    )
-                return
-
-        self.x = self.dest_x
-        self.y = self.dest_y
-
     # Attempts to open a door.
     def _open_door(self) -> None:
         target_door: Door = self.game_entities.get_door_at(self.action_target_x, self.action_target_y)
@@ -404,65 +388,21 @@ class Actor(Entity):
         if target_actor.health <= 0:
             return
 
-        # Hurt the target.
-        target_actor.take_damage(self.atk_dmg)
-
-        # Send different message depending on what is attacked with.
-        # Change color depending on if player or not.
-        msg_color: [int]
-        if self.is_player:
-            msg_color = self.game_data.colors["ATK_MSG"]
-        else:
-            msg_color = self.game_data.colors["BAD_MSG"]
-
-        if target_actor.health > 0:
-            if self.wielding is None:
-                self.game_interface.message_box.add_msg(
-                    f"{self.name} pummels {target_actor.name} with his fists for {self.atk_dmg} dmg!",
-                    msg_color
-                )
-            else:
-                self.game_interface.message_box.add_msg(
-                    f"{self.name} hits {target_actor.name} with his {self.wielding} for {self.atk_dmg} dmg!",
-                    msg_color
-                )
-        else:
-            self.game_interface.message_box.add_msg(
-                f"{self.name} guts {target_actor.name}.", self.game_data.colors["KILL_MSG"]
-            )
+        target_actor.receive_hit(self, self.atk_dmg, 100)
 
     # Performs a ranged attack
     def _attack_ranged(self) -> None:
+        hit_chance: int = 100
+
         # Check each point within the bullet path for something that can be attacked.
         for point in self.bullet_path:
-            target_actor: Actor = self.game_entities.get_actor_at(point[0], point[1])
-            # The Actor, if fast enough, may have moved away before attack could finish
-            # Or player purposely attempts to attack something that can't be attacked
-            if target_actor is None or target_actor.health <= 0:
-                continue
-
-            # Hurt the target.
-            target_actor.take_damage(self.atk_dmg)
-
-            # Send different message depending on what is attacked with.
-            # Change color depending on if player or not.
-            msg_color: [int]
-            if self.is_player:
-                msg_color = self.game_data.colors["ATK_MSG"]
+            entity_at_point: Entity = self.game_entities.get_all_at(point[0], point[1])[-1]
+            if isinstance(entity_at_point, Actor) and entity_at_point.health > 0:
+                entity_at_point.receive_hit(self, self.atk_dmg, hit_chance, True)
+                return
             else:
-                msg_color = self.game_data.colors["BAD_MSG"]
-
-            if target_actor.health > 0:
-                self.game_interface.message_box.add_msg(
-                    f"{self.name} shoots {target_actor.name} with his {self.wielding} for {self.atk_dmg} dmg!",
-                    msg_color
-                )
-            else:
-                self.game_interface.message_box.add_msg(
-                    f"{self.name} executes {target_actor.name}.", self.game_data.colors["KILL_MSG"]
-                )
-
-            return
+                # If the bullet passes through something that provides cover, lower hit chance.
+                hit_chance -= entity_at_point.cover_percent
 
         self.game_interface.message_box.add_msg(
             f"{self.name} shoots at nothing.", self.game_data.colors["ERROR_MSG"]
@@ -514,10 +454,51 @@ class Actor(Entity):
         self.inventory.append(dict({"ID": self._get_next_item_id(), "Item": item_, "Amount": amount}))
 
     # Called by anything that wants to damage this actor.
-    def take_damage(self, amount: int) -> None:
-        self.health -= amount
-        if self.health <= 0:
+    def receive_hit(self, src_actor: "Actor", atk_dmg: int, hit_chance: int, ranged: bool = False) -> None:
+        # Calculate random and shit later
+        if hit_chance:
+            pass
+        self.health -= atk_dmg
+
+        # Send different message depending on what is attacked with.
+        # Change color depending on if player or not.
+        msg_color: tuple[int, int, int]
+        hit_msg: str
+        if src_actor.is_player:
+            msg_color = self.game_data.colors["ATK_MSG"]
+        else:
+            msg_color = self.game_data.colors["BAD_MSG"]
+
+        if self.health > 0:
+            if ranged:
+                hit_msg = f"{src_actor.name} shoots {self.name} with his {src_actor.wielding} for {atk_dmg} dmg!"
+            else:
+                hit_msg = f"{src_actor.name} hits {self.name} with his {src_actor.wielding} for {atk_dmg} dmg!"
+        else:
+            if ranged:
+                hit_msg = f"{src_actor.name} executes {self.name}."
+            else:
+                hit_msg = f"{src_actor.name} guts {self.name}."
+            msg_color = self.game_data.colors["KILL_MSG"]
+
             self._play_dead()
+
+        self.game_interface.message_box.add_msg(hit_msg, msg_color)
+
+    # ~~~ ACTION METHODS ~~~
+    # Moves to a new position.
+    def move(self) -> None:
+        # We need to check again that the destination isn't blocked in case something moved there in the meantime.
+        for dest_entity in self.game_entities.get_all_at(self.dest_x, self.dest_y):
+            if dest_entity.blocked:
+                if self.is_player:
+                    self.game_interface.message_box.add_msg(
+                        f"{self.name} slams into something.", self.game_data.colors["ERROR_MSG"]
+                    )
+                return
+
+        self.x = self.dest_x
+        self.y = self.dest_y
 
     # Returns a list of wieldable items from actors inventory.
     def get_wieldable_items(self) -> [items.Weapon]:
@@ -682,6 +663,11 @@ class Player(Actor):
             self.in_vents = False
             self.move_speed = self.move_speed / 2  # Return to normal speed.
 
+        # If the player walks onto a trap, trigger it.
+        trap: Trap = self.game_entities.get_trap_at(self.x, self.y)
+        if trap is not None:
+            trap.trigger()
+
     def attempt_move(self, x: int, y: int) -> bool:
         # The destination the player is attempting to move to
         new_x: int = self.x + x
@@ -790,9 +776,23 @@ class Tile(Entity):
             game_data: databases.Databases,
             game_entities_: GameEntities,
             game_interface: interface.Interface,
+            cover_percent: int = 0,
             visible: bool = True
     ) -> None:
-        super().__init__(x, y, name, desc, blocked, graphic, color, game_data, game_entities_, game_interface, visible)
+        super().__init__(
+            x,
+            y,
+            name,
+            desc,
+            blocked,
+            graphic,
+            color,
+            game_data,
+            game_entities_,
+            game_interface,
+            cover_percent,
+            visible
+        )
 
         game_entities_.tiles.append(self)
 
@@ -827,6 +827,7 @@ class Vent(Tile):
             game_data,
             game_entities_,
             game_interface,
+            tile["Cover Percent"],
             visible
         )
 
@@ -1014,3 +1015,39 @@ class Camera(Entity):
 
         if self.triggered:
             self.make_noise(50)
+
+
+class Trap(Entity):
+    def __init__(
+            self,
+            x: int,
+            y: int,
+            game_data: databases.Databases,
+            game_entities_: GameEntities,
+            game_interface: interface.Interface
+    ) -> None:
+        tile: dict = game_data.tiles["TRAP"]
+        super().__init__(
+            x,
+            y,
+            tile["Name"],
+            tile["Desc"],
+            tile["Blocked"],
+            tile["Character"],
+            tile["Color"],
+            game_data,
+            game_entities_,
+            game_interface,
+            tile["Cover Percent"],
+            False
+        )
+
+        self.triggered: bool = False
+
+        self.game_entities.traps.append(self)
+
+    def trigger(self) -> None:
+        # Later implement different nasty effects such as shocking the player.
+        print("Trap triggered!")
+        self.triggered = True
+        self.visible = True

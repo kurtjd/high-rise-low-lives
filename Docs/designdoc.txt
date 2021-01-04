@@ -1,3 +1,8 @@
+Short-Term ToDo
+===============
+-Traps
+-Throwables (like grenades)
+
 High-Rise: Low-Lives
 ====================
 Background: It is the year 21XX, and corporations have grown in power. After selling most public lands to pay off debt, the US government has lost most of it's control of land and resources. Inadvertently, the corporations have grown exponentially more powerful with the control of land and resources. With their new power, the corporations continued to expand bullying individuals and local governments off private land for further control of resources. Now, nearly all land in the US is controlled by corporations for the purpose of resource extraction and manufacturing. With the US government now virtually powerless, it lost its ability to enforce laws. Thus, one corporation came to be so powerful that it now controls 98% of all business and land in the country, and is essentially the de-facto ruler of America. Due to most land being controlled for resource extraction, the human population has been condensed into three mega-cities which also makes them easier to control.
@@ -35,6 +40,7 @@ Gameplay-features:
 *Different floor themes like residential area full of gang members and other criminals.
 *In actor description state what actor is doing.
 *Make cameras recalculate FOV only on certain actions to prevent lag thus allowing player block fov
+*Can dual-wield weapons
 
 Races:
 Human: Completely natural, unable to be augmented but no need to charge.

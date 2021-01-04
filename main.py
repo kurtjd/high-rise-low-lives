@@ -203,6 +203,15 @@ def spawn_cameras(
     entities.Camera(30, 11, game_data_, entities__, game_interface_)
 
 
+def spawn_traps(
+        game_data_: databases.Databases,
+        entities__: entities.GameEntities,
+        game_interface_: interface.Interface
+) -> None:
+    entities.Trap(60, 18, game_data_, entities__, game_interface_)
+    entities.Trap(33, 14, game_data_, entities__, game_interface_)
+
+
 # Game Constants
 SCREEN_WIDTH: int = 100
 SCREEN_HEIGHT: int = 50
@@ -230,6 +239,7 @@ spawn_items(GAME_DATA.weapons, GAME_DATA, entities_, game_interface)
 spawn_enemies(GAME_DATA, entities_, game_interface)
 spawn_terminals(GAME_DATA, entities_, game_interface)
 spawn_cameras(GAME_DATA, entities_, game_interface)
+spawn_traps(GAME_DATA, entities_, game_interface)
 entities_.doors[1].locked = True  # Just lock an arbitrary door as a test.
 
 # Init player last so they are rendered last.
