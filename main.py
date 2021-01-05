@@ -142,11 +142,13 @@ def spawn_enemies(
 
 
 def spawn_items(
-        weapons: dict,
         game_data_: databases.Databases,
         entities__: entities.GameEntities,
         game_interface_: interface.Interface
 ) -> None:
+    weapons: dict = game_data_.weapons
+    throwables: dict = game_data_.throwables
+
     entities.ItemEntity(
         22,
         20,
@@ -179,6 +181,22 @@ def spawn_items(
             weapons["TEC9"]["Damage"],
             weapons["TEC9"]["Speed"],
             weapons["TEC9"]["Accuracy"]
+        ),
+        game_data_,
+        entities__,
+        game_interface_
+    )
+
+    entities.ItemEntity(
+        23,
+        18,
+        throwables["GRENADE"]["Name"],
+        throwables["GRENADE"]["Description"],
+        '(',  # Graphic hard-coded for now
+        tcod.amber,
+        items.Grenade(
+            throwables["GRENADE"]["Name"],
+            throwables["GRENADE"]["Description"],
         ),
         game_data_,
         entities__,
@@ -225,7 +243,7 @@ window: tcod.context.Context
 root_console: tcod.Console
 (window, root_console) = init_tcod()
 
-entities_: entities.GameEntities = entities.GameEntities()
+entities_: entities.GameEntities = entities.GameEntities(window, root_console)
 
 game_interface: interface.Interface = init_interface(GAME_DATA.colors)
 
@@ -235,7 +253,7 @@ game_map: map.Map = map.Map(GAME_DATA, entities_, game_interface)
 game_map.read_map("Maps/game_map.txt")
 
 # THESE ARE TEMPORARY, JUST HERE FOR SOMETHING TO TEST
-spawn_items(GAME_DATA.weapons, GAME_DATA, entities_, game_interface)
+spawn_items(GAME_DATA, entities_, game_interface)
 spawn_enemies(GAME_DATA, entities_, game_interface)
 spawn_terminals(GAME_DATA, entities_, game_interface)
 spawn_cameras(GAME_DATA, entities_, game_interface)

@@ -1,0 +1,8 @@
+{
+	"GRENADE":
+	{
+		"Name": "Grenade",
+		"Description": "Blows stuff up.",
+		"Damage": 100
+	}
+}

@@ -13,6 +13,7 @@ class Interface:
         self.wield_screen: Interface.WieldScreen = self.WieldScreen(0, 0)
         self.description_screen: Interface.DescriptionScreen = self.DescriptionScreen(0, 0)
         self.inventory_screen: Interface.InventoryScreen = self.InventoryScreen(0, 0)
+        self.throw_screen: Interface.ThrowScreen = self.ThrowScreen(0, 0)
 
         self.stats_box: Interface.StatsBox = self.StatsBox(
             self.map_w + 1,
@@ -103,6 +104,33 @@ class Interface:
                     string=f"{item[1]['ID']} - {amount} {item[1]['Item'].name}",
                     fg=tcod.cyan
                 )
+
+    class ThrowScreen:
+        def __init__(self, x: int, y: int) -> None:
+            self.x: int = x
+            self.y: int = y
+
+        def render(self, console: tcod.Console, actor_: "entities.Actor") -> None:
+            console.print(
+                self.x,
+                self.y,
+                string=f"Throw which item?",
+                fg=tcod.green
+            )
+
+            for item in enumerate(actor_.inventory):
+                if item[1]["Item"].throwable:
+                    # For smoother grammar
+                    amount: Union[int, str] = item[1]["Amount"]
+                    if amount == 1:
+                        amount = 'a'
+
+                    console.print(
+                        0,
+                        1 + item[0],
+                        string=f"{item[1]['ID']} - {amount} {item[1]['Item'].name}",
+                        fg=tcod.cyan
+                    )
 
     class StatsBox:
         # ~~~ PRIVATE METHODS ~~~

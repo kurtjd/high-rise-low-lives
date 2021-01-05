@@ -3,17 +3,11 @@ import json
 
 class Databases:
     def __init__(self) -> None:
-        # A database of NPCs
         self.npcs: dict = {}
-
-        # A database of weapons
         self.weapons: dict = {}
-
-        # A database of tiles
         self.tiles: dict = {}
-
-        # A database of colors
         self.colors: dict = {}
+        self.throwables: dict = {}
 
     def load_from_files(self) -> None:
         # Colors
@@ -34,3 +28,7 @@ class Databases:
         # Weapons
         with open("Data/weapons.dat") as data_file:
             self.weapons = json.load(data_file)
+
+        # Throwables
+        with open("Data/throwables.dat") as data_file:
+            self.throwables = json.load(data_file)

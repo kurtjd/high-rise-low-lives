@@ -1,4 +1,5 @@
 import math
+import time
 from enum import Enum, auto
 from typing import Optional, Callable, Any
 import tcod
@@ -9,7 +10,7 @@ import ai
 
 
 class GameEntities:
-    def __init__(self) -> None:
+    def __init__(self, window: tcod.context.Context, console: tcod.Console) -> None:
         self.all: list[Entity] = []
         self.tiles: list[Tile] = []
         self.actors:  list[Actor] = []
@@ -20,7 +21,11 @@ class GameEntities:
         self.cameras:  list[Camera] = []
         self.traps: list[Trap] = []
         self.vents: list[Vent] = []
+        self.explosives: list[Explosive] = []
         self.player: Optional[Player] = None
+
+        self.window = window
+        self.console = console
 
     def get_all_at(self, x: int, y: int) -> list["Entity"]:
         return [entity_ for entity_ in self.all if entity_.x == x and entity_.y == y]
@@ -168,6 +173,42 @@ class Entity:
 
         return final_los
 
+    def render_sleep(self, points: list[tuple[int, int]], char: str, color: tuple[int, int, int], delay: float) -> None:
+        self.game_entities.render_all(self.game_entities.console)
+        for point in points:
+            self.game_entities.console.print(
+                x=point[0],
+                y=point[1],
+                string=char,
+                fg=color
+            )
+        self.game_entities.window.present(self.game_entities.console)
+        time.sleep(delay)
+
+    def compute_fov(self, radius: int) -> list[tuple[int, int]]:
+        top: int = self.y - radius
+        bottom: int = self.y + radius
+        left: int = self.x - radius
+        right: int = self.x + radius
+
+        # Gets each point along the circumference of the circle formed by the radius
+        circ_points: list[tuple[int, int]] = []
+        for y in range(top, bottom + 1):
+            for x in range(left, right + 1):
+                distance: float = math.dist((x, y), (self.x, self.y))
+
+                if 0.0 <= (radius - distance) < 1.0:
+                    circ_points.append((x, y))
+
+        # Now calculate the line-of-sight to each point along the circumference to check if anything is blocking view
+        fov: list[tuple[int, int]] = []
+        for circ_point in circ_points:
+            los: list[tuple[int, int]] = self.get_line_of_sight(circ_point[0], circ_point[1])
+            for los_point in los:
+                fov.append(los_point)
+
+        return fov
+
 
 class Actor(Entity):
 
@@ -182,7 +223,8 @@ class Actor(Entity):
         CLOSE_DOOR: int = auto(),
         REST: int = auto(),
         PICKUP: int = auto(),
-        HACK: int = auto()
+        HACK: int = auto(),
+        THROW: int = auto()
 
     # ~~~ PRIVATE METHODS ~~~
 
@@ -208,7 +250,7 @@ class Actor(Entity):
             game_entities_: GameEntities,
             game_interface: interface.Interface
     ) -> None:
-        super().__init__(x, y, name, desc, True, graphic, color, game_data, game_entities_, game_interface, 100)
+        super().__init__(x, y, name, desc, True, graphic, color, game_data, game_entities_, game_interface)
 
         # Descriptors
         self.race: str = race
@@ -242,6 +284,7 @@ class Actor(Entity):
         self.wield_speed: int = 5
         self.hack_speed: int = 20
         self.rest_speed: int = 10
+        self.throw_speed = 8
         self.recovery_rate: int = 10
 
         # Inventory/Equipped
@@ -354,6 +397,8 @@ class Actor(Entity):
             self._wield()
         elif self.action == self.Actions.HACK:
             self._hack()
+        elif self.action == self.Actions.THROW:
+            self._throw()
 
     # Attempts to open a door.
     def _open_door(self) -> None:
@@ -392,20 +437,34 @@ class Actor(Entity):
 
     # Performs a ranged attack
     def _attack_ranged(self) -> None:
-        hit_chance: int = 100
-
         # Check each point within the bullet path for something that can be attacked.
+        prev_entity_cover: int = 0
         for point in self.bullet_path:
             entity_at_point: Entity = self.game_entities.get_all_at(point[0], point[1])[-1]
             if isinstance(entity_at_point, Actor) and entity_at_point.health > 0:
-                entity_at_point.receive_hit(self, self.atk_dmg, hit_chance, True)
+                entity_at_point.receive_hit(self, self.atk_dmg, 100 - prev_entity_cover, True)
                 return
             else:
-                # If the bullet passes through something that provides cover, lower hit chance.
-                hit_chance -= entity_at_point.cover_percent
+                prev_entity_cover = entity_at_point.cover_percent
+
+            self.render_sleep([(point[0], point[1])], ')', tcod.red, 0.01)
 
         self.game_interface.message_box.add_msg(
             f"{self.name} shoots at nothing.", self.game_data.colors["ERROR_MSG"]
+        )
+
+    def _throw(self) -> None:
+        # Draw the throwable as it goes through the air
+        for point in self.bullet_path:
+            self.render_sleep([(point[0], point[1])], ')', tcod.red, 0.01)
+
+        # Create a new explosive on the target grid cell.
+        Explosive(
+            self.action_target_x,
+            self.action_target_y,
+            self.game_data,
+            self.game_entities,
+            self.game_interface
         )
 
     # Update what the player is wielding and change stats to reflect that.
@@ -454,7 +513,7 @@ class Actor(Entity):
         self.inventory.append(dict({"ID": self._get_next_item_id(), "Item": item_, "Amount": amount}))
 
     # Called by anything that wants to damage this actor.
-    def receive_hit(self, src_actor: "Actor", atk_dmg: int, hit_chance: int, ranged: bool = False) -> None:
+    def receive_hit(self, src_entity: Entity, atk_dmg: int, hit_chance: int, ranged: bool = False) -> None:
         # Calculate random and shit later
         if hit_chance:
             pass
@@ -464,21 +523,35 @@ class Actor(Entity):
         # Change color depending on if player or not.
         msg_color: tuple[int, int, int]
         hit_msg: str
-        if src_actor.is_player:
+        if isinstance(src_entity, Player):
             msg_color = self.game_data.colors["ATK_MSG"]
         else:
             msg_color = self.game_data.colors["BAD_MSG"]
 
         if self.health > 0:
-            if ranged:
-                hit_msg = f"{src_actor.name} shoots {self.name} with his {src_actor.wielding} for {atk_dmg} dmg!"
+            if isinstance(src_entity, Actor):
+                if ranged:
+                    hit_msg = (
+                        f"{src_entity.name} shoots {self.name} with his"
+                        f"{src_entity.wielding} for {atk_dmg} damage!"
+                    )
+                else:
+                    hit_msg = f"{src_entity.name} hits {self.name} with his {src_entity.wielding} for {atk_dmg} damage!"
+            elif isinstance(src_entity, Explosive):
+                hit_msg = f"{self.name} is caught in an explosion and receives {atk_dmg} damage!"
             else:
-                hit_msg = f"{src_actor.name} hits {self.name} with his {src_actor.wielding} for {atk_dmg} dmg!"
+                hit_msg = "LOL"
         else:
-            if ranged:
-                hit_msg = f"{src_actor.name} executes {self.name}."
+            if isinstance(src_entity, Actor):
+                if ranged:
+                    hit_msg = f"{src_entity.name} executes {self.name}."
+                else:
+                    hit_msg = f"{src_entity.name} guts {self.name}."
+            elif isinstance(src_entity, Explosive):
+                hit_msg = f"An explosive turns {self.name} into a thick red paste."
             else:
-                hit_msg = f"{src_actor.name} guts {self.name}."
+                hit_msg = "LOL"
+
             msg_color = self.game_data.colors["KILL_MSG"]
 
             self._play_dead()
@@ -500,9 +573,11 @@ class Actor(Entity):
         self.x = self.dest_x
         self.y = self.dest_y
 
-    # Returns a list of wieldable items from actors inventory.
-    def get_wieldable_items(self) -> [items.Weapon]:
-        return [item_ for item_ in self.inventory if isinstance(item_["Item"], items.Weapon)]
+    def get_wieldable_items(self) -> [items.Item]:
+        return [item_ for item_ in self.inventory if item_["Item"].wieldable]
+
+    def get_throwable_items(self) -> [items.Item]:
+        return [item_ for item_ in self.inventory if item_["Item"].throwable]
 
     # Calls the appropriate attack function.
     def attempt_atk(
@@ -551,6 +626,16 @@ class Actor(Entity):
         # If destination is not blocked and is not a living Actor, move to it
         self._set_action(self.Actions.MOVE, self.move_speed)
         return True
+
+    def attempt_throw(self, x: int, y: int, throw_path: Optional[list[tuple[int, int]]] = None):
+        entity_at: Entity = self.game_entities.get_all_at(x, y)[-1]
+        if isinstance(entity_at, Actor) or not entity_at.blocked:
+            self.bullet_path = throw_path
+            self._set_action(self.Actions.THROW, self.throw_speed, x, y)
+        else:
+            self.game_interface.message_box.add_msg(
+                "You can't throw anything there.", self.game_data.colors["ERROR_MSG"]
+            )
 
     # Attempts to pick an item up off the floor where the Actor is standing.
     def attempt_pickup(self) -> None:
@@ -846,8 +931,19 @@ class Door(Entity):
             game_interface: interface.Interface
     ) -> None:
         tile: dict = game_data.tiles["DOOR_CLOSED"]
-        super().__init__(x, y, tile["Name"], tile["Desc"], tile["Blocked"],
-                         tile["Character"], tile["Color"], game_data, game_entities_, game_interface)
+        super().__init__(
+            x,
+            y,
+            tile["Name"],
+            tile["Desc"],
+            tile["Blocked"],
+            tile["Character"],
+            tile["Color"],
+            game_data,
+            game_entities_,
+            game_interface,
+            tile["Cover Percent"]
+        )
         self.opened: bool = False
         self.locked: bool = False
         game_entities_.doors.append(self)
@@ -860,12 +956,14 @@ class Door(Entity):
         self.blocked = False
         self.graphic = self.game_data.tiles["DOOR_OPEN"]["Character"]
         self.color = self.game_data.tiles["DOOR_OPEN"]["Color"]
+        self.cover_percent = self.game_data.tiles["DOOR_OPEN"]["Cover Percent"]
 
     def close(self) -> None:
         self.opened = False
         self.blocked = True
         self.graphic = self.game_data.tiles["DOOR_CLOSED"]["Character"]
         self.color = self.game_data.tiles["DOOR_CLOSED"]["Color"]
+        self.cover_percent = self.game_data.tiles["DOOR_CLOSED"]["Cover Percent"]
 
 
 # Terminals can be hacked to do things like:
@@ -973,34 +1071,11 @@ class Camera(Entity):
         )
 
         self.radius: int = 4
-        self.fov: list[tuple[int, int]] = []
+        self.fov: list[tuple[int, int]] = self.compute_fov(self.radius)
 
         self.triggered: bool = False  # If the player triggered this camera to sound alarms
 
-        self._compute_fov()
         self.game_entities.cameras.append(self)
-
-    # Finds all the grid cells within FOV of the camera.
-    def _compute_fov(self) -> None:
-        top: int = self.y - self.radius
-        bottom: int = self.y + self.radius
-        left: int = self.x - self.radius
-        right: int = self.x + self.radius
-
-        # Gets each point along the circumference of the circle formed by the radius
-        circ_points: list[tuple[int, int]] = []
-        for y in range(top, bottom + 1):
-            for x in range(left, right + 1):
-                distance: float = math.dist((x, y), (self.x, self.y))
-
-                if 0.0 <= (self.radius - distance) < 1.0:
-                    circ_points.append((x, y))
-
-        # Now calculate the line-of-sight to each point along the circumference to check if anything is blocking view
-        for circ_point in circ_points:
-            los: list[tuple[int, int]] = self.get_line_of_sight(circ_point[0], circ_point[1])
-            for los_point in los:
-                self.fov.append(los_point)
 
     def update(self, game_time: int) -> None:
         if not self.triggered:
@@ -1051,3 +1126,66 @@ class Trap(Entity):
         print("Trap triggered!")
         self.triggered = True
         self.visible = True
+
+
+class Explosive(Entity):
+    def __init__(
+            self,
+            x: int,
+            y: int,
+            game_data: databases.Databases,
+            game_entities_: GameEntities,
+            game_interface: interface.Interface
+    ) -> None:
+        tile: dict = game_data.tiles["EXPLOSIVE"]
+        super().__init__(
+            x,
+            y,
+            tile["Name"],
+            tile["Desc"],
+            tile["Blocked"],
+            tile["Character"],
+            tile["Color"],
+            game_data,
+            game_entities_,
+            game_interface
+        )
+
+        self.fuse = 20  # How many rounds before going off.
+        self.damage = 80
+        self.blast_radius = 3
+
+        game_entities_.explosives.append(self)
+
+    def explode(self) -> None:
+        actors_hit: list[Actor] = []
+
+        for i in range(self.blast_radius + 1):
+            if i == 0:
+                blast_zone: list[tuple[int, int]] = [(self.x, self.y)]
+            else:
+                blast_zone: list[tuple[int, int]] = self.compute_fov(i)
+                self.damage -= 20
+
+            for point in blast_zone:
+                actor: Actor = self.game_entities.get_actor_at(point[0], point[1])
+                if actor is not None and actor.health >= 0 and actor not in actors_hit:
+                    actor.receive_hit(self, self.damage, 100)
+                    actors_hit.append(actor)
+
+            self.render_sleep(blast_zone, '*', tcod.red, 0.05)
+
+        self.remove()
+
+    def update(self, game_time: int) -> None:
+        self.fuse -= 1
+        if self.fuse <= 0:
+            self.explode()
+
+    def remove(self) -> None:
+        explosives: list[Explosive] = self.game_entities.explosives
+        for explosive_ in enumerate(explosives):
+            if explosive_[1] is self:
+                explosives.pop(explosive_[0])
+
+        super().remove()

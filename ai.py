@@ -60,8 +60,8 @@ def smart_ranged(src_actor: "entities.Actor", game_actors: list["entities.Actor"
             src_actor.attempt_move(1, 0)
 
     if abs(src_actor.x - src_actor.atk_target.x) <= 5 and abs(src_actor.y - src_actor.atk_target.y) <= 5:
-        src_actor.bullet_path = src_actor.get_line_of_sight(src_actor.atk_target.x, src_actor.atk_target.y)
-        src_actor.attempt_atk(src_actor.atk_target.x, src_actor.atk_target.y, True, src_actor.bullet_path)
+        bullet_path = src_actor.get_line_of_sight(src_actor.atk_target.x, src_actor.atk_target.y, True)
+        src_actor.attempt_atk(src_actor.atk_target.x, src_actor.atk_target.y, True, bullet_path)
     elif not did_move:
         src_actor.attempt_rest()
 
@@ -91,7 +91,7 @@ def turret(src_actor: "entities.Actor", game_actors: list["entities.Actor"]) -> 
         print(f"Player: ({src_actor.atk_target.x}, {src_actor.atk_target.y})")
         print(f"Target: ({atk_x}, {atk_y})")
 
-        src_actor.bullet_path = src_actor.get_line_of_sight(src_actor.atk_target.x, src_actor.atk_target.y)
+        src_actor.bullet_path = src_actor.get_line_of_sight(src_actor.atk_target.x, src_actor.atk_target.y, True)
         src_actor.attempt_atk(atk_x, atk_y, True, src_actor.bullet_path)
     else:
         src_actor.attempt_rest()

@@ -1,7 +1,9 @@
 Short-Term ToDo
 ===============
--Traps
--Throwables (like grenades)
+-Make explosives take into account cover
+-Rearrange rendering order
+-Make vents not make things like traps visible when leaving
+-Make it so you can't throw things past walls
 
 High-Rise: Low-Lives
 ====================

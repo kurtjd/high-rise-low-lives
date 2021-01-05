@@ -35,6 +35,13 @@ class GameFSM:
             player_
         )
 
+        self.select_throw_state: SelectThrowState = SelectThrowState(
+            self,
+            entities_,
+            game_interface,
+            player_
+        )
+
         self.wield_screen_state: WieldScreenState = WieldScreenState(
             self,
             entities_,
@@ -43,6 +50,13 @@ class GameFSM:
         )
 
         self.inventory_screen_state: InventoryScreenState = InventoryScreenState(
+            self,
+            entities_,
+            game_interface,
+            player_
+        )
+
+        self.throw_screen_state: ThrowScreenState = ThrowScreenState(
             self,
             entities_,
             game_interface,
@@ -78,11 +92,9 @@ class GameFSM:
         self.state.enter()
 
     def handle_rendering(self, window: tcod.context.Context, console: tcod.Console) -> None:
-        self.state.handle_rendering(console)
-
-        # General rendering.
-        window.present(console)
         console.clear()
+        self.state.handle_rendering(console)
+        window.present(console)
 
     def handle_input(self) -> None:
         for event in tcod.event.wait():
@@ -180,6 +192,10 @@ class PlayingState(BaseState):
             self.fsm.set_state(self.fsm.examine_state)
         elif key == tcod.event.K_f:
             self.fsm.set_state(self.fsm.select_target_state)
+        elif key == tcod.event.K_t:
+            self.fsm.set_state(self.fsm.throw_screen_state)
+        elif key == tcod.event.K_ESCAPE:
+            raise SystemExit()
 
     def handle_updates(self) -> None:
         # Updates the game every tick of time in between player actions
@@ -272,6 +288,46 @@ class InventoryScreenState(BaseState):
                 if item["ID"] == key:
                     self.player.examine_target = item["Item"]
                     self.fsm.set_state(self.fsm.desc_screen_state)
+                    return
+
+    def handle_updates(self) -> None:
+        pass
+
+
+class ThrowScreenState(BaseState):
+    def __init__(
+            self,
+            fsm: GameFSM,
+            entities_: entities.GameEntities,
+            game_interface: interface.Interface,
+            player_: entities.Player
+    ) -> None:
+        super().__init__(fsm, entities_, game_interface, player_)
+
+    def enter(self) -> None:
+        pass
+
+    def exit(self) -> None:
+        pass
+
+    def handle_rendering(self, console: tcod.Console) -> None:
+        self.game_interface.throw_screen.render(console, self.player)
+
+    def handle_input(self, event: tcod.event) -> None:
+        key: Union[int, str] = event.sym
+
+        # If not a letter key, then do nothing.
+        if tcod.event.K_a <= key <= tcod.event.K_z:
+            key = chr(key)
+
+            # If the shift key was held, convert to upper-case.
+            if event.mod & tcod.event.KMOD_SHIFT:
+                key = key.upper()
+
+            # Search the IDs of the player's throwables for a match with the key pressed and then throw that.
+            for throwable in self.player.get_throwable_items():
+                if throwable["ID"] == key:
+                    self.fsm.set_state(self.fsm.select_throw_state)
                     return
 
     def handle_updates(self) -> None:
@@ -410,11 +466,14 @@ class SelectTargetState(SelectState):
         for point in self.player.bullet_path:
             console.print(point[0], point[1], '*', tcod.red)
 
+    def update_bullet_path(self, extend: bool = False) -> None:
+        self.player.bullet_path = self.player.get_line_of_sight(self.select_x, self.select_y, extend)
+
     def handle_input(self, event: tcod.event) -> None:
         key: int = event.sym
 
         self.move_cursor(key)
-        self.player.bullet_path = self.player.get_line_of_sight(self.select_x, self.select_y, True)
+        self.update_bullet_path(True)
 
         if key == tcod.event.K_RETURN:
             self.player.attempt_atk(self.select_x, self.select_y, True, self.player.bullet_path)
@@ -422,3 +481,24 @@ class SelectTargetState(SelectState):
 
     def handle_updates(self) -> None:
         pass
+
+
+class SelectThrowState(SelectTargetState):
+    def __init__(
+            self,
+            fsm: GameFSM,
+            entities_: entities.GameEntities,
+            game_interface: interface.Interface,
+            player_: entities.Player
+    ) -> None:
+        super().__init__(fsm, entities_, game_interface, player_)
+
+    def handle_input(self, event: tcod.event) -> None:
+        key: int = event.sym
+
+        self.move_cursor(key)
+        self.update_bullet_path(False)
+
+        if event.sym == tcod.event.K_RETURN:
+            self.player.attempt_throw(self.select_x, self.select_y, self.player.bullet_path)
+            self.fsm.set_state(self.fsm.playing_state)
