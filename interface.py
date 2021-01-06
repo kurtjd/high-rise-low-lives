@@ -10,12 +10,12 @@ class Interface:
         self.map_w: int = map_w
         self.map_h: int = map_h
 
-        self.wield_screen: Interface.WieldScreen = self.WieldScreen(0, 0)
-        self.description_screen: Interface.DescriptionScreen = self.DescriptionScreen(0, 0)
-        self.inventory_screen: Interface.InventoryScreen = self.InventoryScreen(0, 0)
-        self.throw_screen: Interface.ThrowScreen = self.ThrowScreen(0, 0)
-        self.drug_screen: Interface.DrugScreen = self.DrugScreen(0, 0)
-        self.charge_screen: Interface.ChargeScreen = self.ChargeScreen(0, 0)
+        self.wield_screen: Interface.WieldScreen = self.WieldScreen()
+        self.description_screen: Interface.DescriptionScreen = self.DescriptionScreen()
+        self.inventory_screen: Interface.InventoryScreen = self.InventoryScreen()
+        self.throw_screen: Interface.ThrowScreen = self.ThrowScreen()
+        self.drug_screen: Interface.DrugScreen = self.DrugScreen()
+        self.charge_screen: Interface.ChargeScreen = self.ChargeScreen()
 
         self.stats_box: Interface.StatsBox = self.StatsBox(
             self.map_w + 1,
@@ -30,41 +30,8 @@ class Interface:
             self.screen_h - self.map_h
         )
 
-    class WieldScreen:
-        def __init__(self, x: int, y: int) -> None:
-            self.x: int = x
-            self.y: int = y
-
-        def render(self, console: tcod.Console, wieldables: list) -> None:
-            console.print(
-                x=self.x,
-                y=self.y,
-                string="Wield which weapon?",
-                fg=tcod.green
-            )
-            console.print(
-                x=self.x,
-                y=self.y + 1,
-                string="- unarmed",
-                fg=tcod.white
-            )
-
-            wieldables.sort()
-            for wieldable in enumerate(wieldables):
-                # For smoother grammar
-                amount: Union[int, str] = wieldable[1][1]["Amount"]
-                if amount == 1:
-                    amount = 'a'
-
-                console.print(
-                    x=self.x,
-                    y=self.y + 2 + wieldable[0],
-                    string=f"{wieldable[1][0]} - {amount} {wieldable[1][1]['Item'].name}",
-                    fg=tcod.cyan
-                )
-
     class DescriptionScreen:
-        def __init__(self, x: int, y: int) -> None:
+        def __init__(self, x: int = 0, y: int = 0) -> None:
             self.x: int = x
             self.y: int = y
 
@@ -82,10 +49,49 @@ class Interface:
                 fg=tcod.white
             )
 
-    class InventoryScreen:
-        def __init__(self, x: int, y: int) -> None:
+    class SelectScreen:
+        def __init__(self, x: int = 0, y: int = 0) -> None:
             self.x: int = x
             self.y: int = y
+
+        def print_items(self, items: list[tuple[str, dict]], console: tcod.Console):
+            items.sort()
+            for item in enumerate(items):
+                # For smoother grammar
+                amount: Union[int, str] = item[1][1]["Amount"]
+                if amount == 1:
+                    amount = 'a'
+
+                console.print(
+                    x=self.x,
+                    y=self.y + 2 + item[0],
+                    string=f"{item[1][0]} - {amount} {item[1][1]['Item'].name}",
+                    fg=tcod.cyan
+                )
+
+    class WieldScreen(SelectScreen):
+        def __init__(self, x: int = 0, y: int = 0) -> None:
+            super().__init__(x, y)
+
+        def render(self, console: tcod.Console, wieldables: list[tuple[str, dict]]) -> None:
+            console.print(
+                x=self.x,
+                y=self.y,
+                string="Wield which weapon?",
+                fg=tcod.green
+            )
+            console.print(
+                x=self.x,
+                y=self.y + 1,
+                string="- unarmed",
+                fg=tcod.white
+            )
+
+            self.print_items(wieldables, console)
+
+    class InventoryScreen(SelectScreen):
+        def __init__(self, x: int = 0, y: int = 0) -> None:
+            super().__init__(x, y)
 
         def render(self, console: tcod.Console, actor_: "entities.Actor") -> None:
             console.print(
@@ -95,27 +101,14 @@ class Interface:
                 fg=tcod.green
             )
 
-            items: list = [item_ for item_ in actor_.inventory.items()]
-            items.sort()
-            for item in enumerate(items):
-                # For smoother grammar
-                amount: Union[int, str] = item[1][1]["Amount"]
-                if amount == 1:
-                    amount = 'a'
+            items: list[tuple[str, dict]] = [item_ for item_ in actor_.inventory.items()]
+            self.print_items(items, console)
 
-                console.print(
-                    0,
-                    1 + item[0],
-                    string=f"{item[1][0]} - {amount} {item[1][1]['Item'].name}",
-                    fg=tcod.cyan
-                )
+    class ThrowScreen(SelectScreen):
+        def __init__(self, x: int = 0, y: int = 0) -> None:
+            super().__init__(x, y)
 
-    class ThrowScreen:
-        def __init__(self, x: int, y: int) -> None:
-            self.x: int = x
-            self.y: int = y
-
-        def render(self, console: tcod.Console, throwables: list) -> None:
+        def render(self, console: tcod.Console, throwables: list[tuple[str, dict]]) -> None:
             console.print(
                 x=self.x,
                 y=self.y,
@@ -123,26 +116,13 @@ class Interface:
                 fg=tcod.green
             )
 
-            throwables.sort()
-            for throwable in enumerate(throwables):
-                # For smoother grammar
-                amount: Union[int, str] = throwable[1][1]["Amount"]
-                if amount == 1:
-                    amount = 'a'
+            self.print_items(throwables, console)
 
-                console.print(
-                    x=self.x,
-                    y=self.y + 2 + throwable[0],
-                    string=f"{throwable[1][0]} - {amount} {throwable[1][1]['Item'].name}",
-                    fg=tcod.cyan
-                )
+    class DrugScreen(SelectScreen):
+        def __init__(self, x: int = 0, y: int = 0) -> None:
+            super().__init__(x, y)
 
-    class DrugScreen:
-        def __init__(self, x: int, y: int) -> None:
-            self.x: int = x
-            self.y: int = y
-
-        def render(self, console: tcod.Console, drugs: list) -> None:
+        def render(self, console: tcod.Console, drugs: list[tuple[str, dict]]) -> None:
             console.print(
                 self.x,
                 self.y,
@@ -150,26 +130,13 @@ class Interface:
                 fg=tcod.green
             )
 
-            drugs.sort()
-            for drug in enumerate(drugs):
-                # For smoother grammar
-                amount: Union[int, str] = drug[1][1]["Amount"]
-                if amount == 1:
-                    amount = 'a'
+            self.print_items(drugs, console)
 
-                console.print(
-                    0,
-                    1 + drug[0],
-                    string=f"{drug[1][0]} - {amount} {drug[1][1]['Item'].name}",
-                    fg=tcod.cyan
-                )
+    class ChargeScreen(SelectScreen):
+        def __init__(self, x: int = 0, y: int = 0) -> None:
+            super().__init__(x, y)
 
-    class ChargeScreen:
-        def __init__(self, x: int, y: int) -> None:
-            self.x: int = x
-            self.y: int = y
-
-        def render(self, console: tcod.Console, power_sources: list) -> None:
+        def render(self, console: tcod.Console, power_sources: list[tuple[str, dict]]) -> None:
             console.print(
                 self.x,
                 self.y,
@@ -177,19 +144,7 @@ class Interface:
                 fg=tcod.green
             )
 
-            power_sources.sort()
-            for powersrc in enumerate(power_sources):
-                # For smoother grammar
-                amount: Union[int, str] = powersrc[1][1]["Amount"]
-                if amount == 1:
-                    amount = 'a'
-
-                console.print(
-                    0,
-                    1 + powersrc[0],
-                    string=f"{powersrc[1][0]} - {amount} {powersrc[1][1]['Item'].name}",
-                    fg=tcod.cyan
-                )
+            self.print_items(power_sources, console)
 
     class StatsBox:
         # ~~~ PRIVATE METHODS ~~~

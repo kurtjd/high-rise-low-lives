@@ -1,6 +1,5 @@
 Short-Term ToDo
 ===============
--Simplify interface screens
 
 
 Mid-Term ToDo
