@@ -63,6 +63,13 @@ class GameFSM:
             player_
         )
 
+        self.drug_screen_state: DrugScreenState = DrugScreenState(
+            self,
+            entities_,
+            game_interface,
+            player_
+        )
+
         self.desc_screen_state: DescScreenState = DescScreenState(
             self,
             entities_,
@@ -194,6 +201,8 @@ class PlayingState(BaseState):
             self.fsm.set_state(self.fsm.select_target_state)
         elif key == tcod.event.K_t:
             self.fsm.set_state(self.fsm.throw_screen_state)
+        elif key == tcod.event.K_q:
+            self.fsm.set_state(self.fsm.drug_screen_state)
         elif key == tcod.event.K_ESCAPE:
             raise SystemExit()
 
@@ -244,8 +253,8 @@ class WieldScreenState(BaseState):
 
             # Search the IDs of the player's wieldables for a match with the key pressed and then wield that.
             for wieldable in self.player.get_wieldable_items():
-                if wieldable["ID"] == key:
-                    self.player.attempt_wield(wieldable["Item"])
+                if wieldable[0] == key:
+                    self.player.attempt_wield(wieldable[1]["Item"])
                     self.fsm.reverse_state()
                     return
 
@@ -284,9 +293,9 @@ class InventoryScreenState(BaseState):
                 key = key.upper()
 
             # Search the IDs of the player's inventory for a match with the key pressed and then describe that.
-            for item in self.player.inventory:
-                if item["ID"] == key:
-                    self.player.examine_target = item["Item"]
+            for item in self.player.inventory.items():
+                if item[0] == key:
+                    self.player.examine_target = item[1]["Item"]
                     self.fsm.set_state(self.fsm.desc_screen_state)
                     return
 
@@ -311,7 +320,7 @@ class ThrowScreenState(BaseState):
         pass
 
     def handle_rendering(self, console: tcod.Console) -> None:
-        self.game_interface.throw_screen.render(console, self.player)
+        self.game_interface.throw_screen.render(console, self.player.get_throwable_items())
 
     def handle_input(self, event: tcod.event) -> None:
         key: Union[int, str] = event.sym
@@ -326,7 +335,8 @@ class ThrowScreenState(BaseState):
 
             # Search the IDs of the player's throwables for a match with the key pressed and then throw that.
             for throwable in self.player.get_throwable_items():
-                if throwable["ID"] == key:
+                if throwable[0] == key:
+                    self.player.item_selected = throwable[1]["Item"]
                     self.fsm.set_state(self.fsm.select_throw_state)
                     return
 
@@ -355,6 +365,47 @@ class DescScreenState(BaseState):
 
     def handle_input(self, event: tcod.event) -> None:
         pass
+
+    def handle_updates(self) -> None:
+        pass
+
+
+class DrugScreenState(BaseState):
+    def __init__(
+            self,
+            fsm: GameFSM,
+            entities_: entities.GameEntities,
+            game_interface: interface.Interface,
+            player_: entities.Player
+    ) -> None:
+        super().__init__(fsm, entities_, game_interface, player_)
+
+    def enter(self) -> None:
+        pass
+
+    def exit(self) -> None:
+        pass
+
+    def handle_rendering(self, console: tcod.console) -> None:
+        self.game_interface.drug_screen.render(console, self.player.get_drug_items())
+
+    def handle_input(self, event: tcod.event) -> None:
+        key: Union[int, str] = event.sym
+
+        # If not a letter key, then do nothing.
+        if tcod.event.K_a <= key <= tcod.event.K_z:
+            key = chr(key)
+
+            # If the shift key was held, convert to upper-case.
+            if event.mod & tcod.event.KMOD_SHIFT:
+                key = key.upper()
+
+            # Search the IDs of the player's throwables for a match with the key pressed and then throw that.
+            for drug in self.player.get_drug_items():
+                if drug[0] == key:
+                    self.player.attempt_use_drug(drug[0])
+                    self.fsm.set_state(self.fsm.playing_state)
+                    return
 
     def handle_updates(self) -> None:
         pass
@@ -500,5 +551,5 @@ class SelectThrowState(SelectTargetState):
         self.update_bullet_path(False)
 
         if event.sym == tcod.event.K_RETURN:
-            self.player.attempt_throw(self.select_x, self.select_y, self.player.bullet_path)
+            self.player.attempt_throw(self.select_x, self.select_y, self.player.item_selected, self.player.bullet_path)
             self.fsm.set_state(self.fsm.playing_state)

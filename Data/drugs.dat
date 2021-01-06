@@ -1,0 +1,8 @@
+{
+	"STITCH":
+	{
+		"Name": "Stitch",
+		"Description": "Puts the body's natural healing mechanisms into overdrive.",
+		"Effect": "use_stitch"
+	}
+}

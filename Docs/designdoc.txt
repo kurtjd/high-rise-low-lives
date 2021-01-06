@@ -1,9 +1,15 @@
 Short-Term ToDo
 ===============
--Make explosives take into account cover
--Rearrange rendering order
--Make vents not make things like traps visible when leaving
--Make it so you can't throw things past walls
+-Simplify select screen states
+
+
+Mid-Term ToDo
+==============
+*In actor description state actor skills, attributes, etc, what they are doing, what they have equipped, how dangerous they are
+*When cameras selected during examine state show FOV
+*Have items show stats in description
+*Make cameras recalculate FOV only on certain actions to prevent lag thus allowing player block fov with objects
+
 
 High-Rise: Low-Lives
 ====================
@@ -40,8 +46,6 @@ Gameplay-features:
 *Some enemies can be bribed or hired.
 *Simple time travel mechanic through technomancy.
 *Different floor themes like residential area full of gang members and other criminals.
-*In actor description state what actor is doing.
-*Make cameras recalculate FOV only on certain actions to prevent lag thus allowing player block fov
 *Can dual-wield weapons
 
 Races:
@@ -107,6 +111,7 @@ Turrets
 Mad Scientist
 Gang members
 Criminals
+Clones
 
 Neutral NPCs:
 Fixer (sells items for cigarettes)
@@ -150,8 +155,8 @@ Shock
 Lasers
 
 Cool References:
-Blade Runner: Deckard's gun, blade runner NPC
+Blade Runner: Deckard's gun, blade runners
 Snow Crash: Reason gun, character references, snow crash drug
 Deus ex: Nano vs mechanical augments, character references
 The Matrix: character references, 
-
+Johnny Mnemonic: street preacher

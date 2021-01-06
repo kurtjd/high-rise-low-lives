@@ -1,4 +1,5 @@
-from typing import Any
+from typing import Callable
+import drug_effects
 
 
 class Item:
@@ -9,14 +10,12 @@ class Item:
         name: str,
         desc: str,
         throwable: bool = False,
-        wieldable: bool = False,
-        use_action: Any = None
+        wieldable: bool = False
     ) -> None:
         self.name: str = name
         self.desc: str = desc
         self.throwable: bool = throwable
         self.wieldable: bool = wieldable
-        self.use_action: Any = use_action
 
 
 class Weapon(Item):
@@ -35,3 +34,21 @@ class Grenade(Item):
         desc: str
     ) -> None:
         super().__init__(name, desc, True, False)
+        self.damage = 80
+        self.blast_radius = 3
+        self.fuse = 20
+
+
+class Drug(Item):
+    def __init__(
+        self,
+        name: str,
+        desc: str,
+        effect: Callable[..., None]
+    ) -> None:
+        effects: dict = {
+            "use_stitch": drug_effects.use_sitch
+        }
+
+        super().__init__(name, desc)
+        self.effect = effects[effect]

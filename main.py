@@ -106,7 +106,7 @@ def spawn_enemies(
         game_data_.weapons["BATON"]["Speed"],
         game_data_.weapons["BATON"]["Accuracy"]
     ))
-    enemy1.attempt_wield(enemy1.inventory[0]["Item"])
+    enemy1.attempt_wield(enemy1.inventory['A']["Item"])
 
     enemy2: entities.Actor = entities.Actor(
         "Mercenary",
@@ -136,7 +136,7 @@ def spawn_enemies(
         game_data_.weapons["TEC9"]["Speed"],
         game_data_.weapons["TEC9"]["Accuracy"]
     ))
-    enemy2.attempt_wield(enemy2.inventory[0]["Item"])
+    enemy2.attempt_wield(enemy2.inventory['A']["Item"])
 
     entities.Turret(46, 6, game_data_, entities__, game_interface_)
 
@@ -148,6 +148,7 @@ def spawn_items(
 ) -> None:
     weapons: dict = game_data_.weapons
     throwables: dict = game_data_.throwables
+    drugs: dict = game_data_.drugs
 
     entities.ItemEntity(
         22,
@@ -197,6 +198,23 @@ def spawn_items(
         items.Grenade(
             throwables["GRENADE"]["Name"],
             throwables["GRENADE"]["Description"],
+        ),
+        game_data_,
+        entities__,
+        game_interface_
+    )
+
+    entities.ItemEntity(
+        21,
+        18,
+        drugs["STITCH"]["Name"],
+        drugs["STITCH"]["Description"],
+        '!',  # Graphic hard-coded for now
+        tcod.purple,
+        items.Drug(
+            drugs["STITCH"]["Name"],
+            drugs["STITCH"]["Description"],
+            drugs["STITCH"]["Effect"]
         ),
         game_data_,
         entities__,

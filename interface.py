@@ -14,6 +14,7 @@ class Interface:
         self.description_screen: Interface.DescriptionScreen = self.DescriptionScreen(0, 0)
         self.inventory_screen: Interface.InventoryScreen = self.InventoryScreen(0, 0)
         self.throw_screen: Interface.ThrowScreen = self.ThrowScreen(0, 0)
+        self.drug_screen: Interface.DrugScreen = self.DrugScreen(0, 0)
 
         self.stats_box: Interface.StatsBox = self.StatsBox(
             self.map_w + 1,
@@ -33,7 +34,7 @@ class Interface:
             self.x: int = x
             self.y: int = y
 
-        def render(self, console: tcod.Console, wieldables: dict) -> None:
+        def render(self, console: tcod.Console, wieldables: list) -> None:
             console.print(
                 x=self.x,
                 y=self.y,
@@ -47,16 +48,17 @@ class Interface:
                 fg=tcod.white
             )
 
+            wieldables.sort()
             for wieldable in enumerate(wieldables):
                 # For smoother grammar
-                amount: Union[int, str] = wieldable[1]["Amount"]
+                amount: Union[int, str] = wieldable[1][1]["Amount"]
                 if amount == 1:
                     amount = 'a'
 
                 console.print(
                     x=self.x,
                     y=self.y + 2 + wieldable[0],
-                    string=f"{wieldable[1]['ID']} - {amount} {wieldable[1]['Item'].name}",
+                    string=f"{wieldable[1][0]} - {amount} {wieldable[1][1]['Item'].name}",
                     fg=tcod.cyan
                 )
 
@@ -92,16 +94,18 @@ class Interface:
                 fg=tcod.green
             )
 
-            for item in enumerate(actor_.inventory):
+            items: list = [item_ for item_ in actor_.inventory.items()]
+            items.sort()
+            for item in enumerate(items):
                 # For smoother grammar
-                amount: Union[int, str] = item[1]["Amount"]
+                amount: Union[int, str] = item[1][1]["Amount"]
                 if amount == 1:
                     amount = 'a'
 
                 console.print(
                     0,
                     1 + item[0],
-                    string=f"{item[1]['ID']} - {amount} {item[1]['Item'].name}",
+                    string=f"{item[1][0]} - {amount} {item[1][1]['Item'].name}",
                     fg=tcod.cyan
                 )
 
@@ -110,27 +114,55 @@ class Interface:
             self.x: int = x
             self.y: int = y
 
-        def render(self, console: tcod.Console, actor_: "entities.Actor") -> None:
+        def render(self, console: tcod.Console, throwables: list) -> None:
             console.print(
-                self.x,
-                self.y,
-                string=f"Throw which item?",
+                x=self.x,
+                y=self.y,
+                string="Throw which item?",
                 fg=tcod.green
             )
 
-            for item in enumerate(actor_.inventory):
-                if item[1]["Item"].throwable:
-                    # For smoother grammar
-                    amount: Union[int, str] = item[1]["Amount"]
-                    if amount == 1:
-                        amount = 'a'
+            throwables.sort()
+            for throwable in enumerate(throwables):
+                # For smoother grammar
+                print(throwable)
+                amount: Union[int, str] = throwable[1][1]["Amount"]
+                if amount == 1:
+                    amount = 'a'
 
-                    console.print(
-                        0,
-                        1 + item[0],
-                        string=f"{item[1]['ID']} - {amount} {item[1]['Item'].name}",
-                        fg=tcod.cyan
-                    )
+                console.print(
+                    x=self.x,
+                    y=self.y + 2 + throwable[0],
+                    string=f"{throwable[1][0]} - {amount} {throwable[1][1]['Item'].name}",
+                    fg=tcod.cyan
+                )
+
+    class DrugScreen:
+        def __init__(self, x: int, y: int) -> None:
+            self.x: int = x
+            self.y: int = y
+
+        def render(self, console: tcod.Console, drugs: list) -> None:
+            console.print(
+                self.x,
+                self.y,
+                string=f"Use which drug?",
+                fg=tcod.green
+            )
+
+            drugs.sort()
+            for drug in enumerate(drugs):
+                # For smoother grammar
+                amount: Union[int, str] = drug[1][1]["Amount"]
+                if amount == 1:
+                    amount = 'a'
+
+                console.print(
+                    0,
+                    1 + drug[0],
+                    string=f"{drug[1][0]} - {amount} {drug[1][1]['Item'].name}",
+                    fg=tcod.cyan
+                )
 
     class StatsBox:
         # ~~~ PRIVATE METHODS ~~~
