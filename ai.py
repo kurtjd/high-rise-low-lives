@@ -88,9 +88,6 @@ def turret(src_actor: "entities.Actor", game_actors: list["entities.Actor"]) -> 
         else:
             atk_y = src_actor.atk_target.dest_y
 
-        print(f"Player: ({src_actor.atk_target.x}, {src_actor.atk_target.y})")
-        print(f"Target: ({atk_x}, {atk_y})")
-
         src_actor.bullet_path = src_actor.get_line_of_sight(src_actor.atk_target.x, src_actor.atk_target.y, True)
         src_actor.attempt_atk(atk_x, atk_y, True, src_actor.bullet_path)
     else:

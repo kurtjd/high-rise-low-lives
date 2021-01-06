@@ -149,6 +149,7 @@ def spawn_items(
     weapons: dict = game_data_.weapons
     throwables: dict = game_data_.throwables
     drugs: dict = game_data_.drugs
+    power_sources: dict = game_data_.power_sources
 
     entities.ItemEntity(
         22,
@@ -215,6 +216,24 @@ def spawn_items(
             drugs["STITCH"]["Name"],
             drugs["STITCH"]["Description"],
             drugs["STITCH"]["Effect"]
+        ),
+        game_data_,
+        entities__,
+        game_interface_
+    )
+
+    entities.ItemEntity(
+        20,
+        18,
+        power_sources["BATTERY"]["Name"],
+        power_sources["BATTERY"]["Description"],
+        ':',  # Graphic hard-coded for now
+        tcod.orange,
+        items.PowerSource(
+            power_sources["BATTERY"]["Name"],
+            power_sources["BATTERY"]["Description"],
+            power_sources["BATTERY"]["Charge Held"],
+            power_sources["BATTERY"]["Discharge Time"],
         ),
         game_data_,
         entities__,

@@ -1,6 +1,6 @@
 Short-Term ToDo
 ===============
--Simplify select screen states
+-Simplify interface screens
 
 
 Mid-Term ToDo

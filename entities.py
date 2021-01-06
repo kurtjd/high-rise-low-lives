@@ -176,7 +176,7 @@ class Entity:
             if entity_[1] is self:
                 self.game_entities.all.pop(entity_[0])
 
-    def make_noise(self, noise_radius: int):
+    def make_noise(self, noise_radius: int) -> None:
         self.noise_level = noise_radius
 
     # Uses the bresenham line algorithm to get a list of points on the map the LOS would pass through.
@@ -266,7 +266,8 @@ class Actor(Entity):
         PICKUP: int = auto(),
         HACK: int = auto(),
         THROW: int = auto(),
-        USE_DRUG: int = auto()
+        USE_DRUG: int = auto(),
+        CHARGE: int = auto()
 
     # ~~~ PRIVATE METHODS ~~~
 
@@ -315,8 +316,8 @@ class Actor(Entity):
         self.hacking_skill: int = 10
 
         # Other stats
+        self.charge_percent = 100
         self.mp: int = 50
-        self.charge: int = 100
         self.ac: int = 6
         self.base_atk_dmg: int = 10
         self.atk_dmg: int = self.base_atk_dmg
@@ -445,6 +446,8 @@ class Actor(Entity):
             self._throw()
         elif self.action == self.Actions.USE_DRUG:
             self._use_drug()
+        elif self.action == self.Actions.CHARGE:
+            self._charge()
 
     # Attempts to open a door.
     def _open_door(self) -> None:
@@ -506,24 +509,26 @@ class Actor(Entity):
 
         x: int
         y: int
-        entity_at_end: Entity = self.game_entities.get_all_at(self.bullet_path[-1][0], self.bullet_path[-1][1])[-1]
 
         # If the player dropped a grenade at their feet:
         if not self.bullet_path:
             x = self.x
             y = self.y
-        # If the target isn't blocked or is an Actor, place explosive exactly where thrown:
-        elif not entity_at_end.blocked or isinstance(entity_at_end, Actor):
-            x = self.bullet_path[-1][0]
-            y = self.bullet_path[-1][1]
-        # If target is blocked, place explosive one point before blocked object.
         else:
-            if len(self.bullet_path) > 1:
-                x = self.bullet_path[-2][0]
-                y = self.bullet_path[-2][1]
+            entity_at_end: Entity = self.game_entities.get_all_at(self.bullet_path[-1][0], self.bullet_path[-1][1])[-1]
+
+            # If the target isn't blocked or is an Actor, place explosive exactly where thrown:
+            if not entity_at_end.blocked or isinstance(entity_at_end, Actor):
+                x = self.bullet_path[-1][0]
+                y = self.bullet_path[-1][1]
+            # If target is blocked, place explosive one point before blocked object.
             else:
-                x = self.x
-                y = self.y
+                if len(self.bullet_path) > 1:
+                    x = self.bullet_path[-2][0]
+                    y = self.bullet_path[-2][1]
+                else:
+                    x = self.x
+                    y = self.y
 
         if isinstance(self.throwing, items.Grenade):
             # Create a new explosive on the target grid cell.
@@ -559,6 +564,17 @@ class Actor(Entity):
 
         self.game_interface.message_box.add_msg(
             f"{self.name} uses {drug.name}", self.game_data.colors["SUCCESS_MSG"]
+        )
+
+        self._dec_item_count(self.action_target)
+
+    def _charge(self):
+        powersrc: items.PowerSource = self.inventory[self.action_target]["Item"]
+        self.charge_percent += powersrc.charge_held
+
+        self.game_interface.message_box.add_msg(
+            f"{self.name} receives {powersrc.charge_held}% charge from a {powersrc.name}.",
+            self.game_data.colors["SUCCESS_MSG"]
         )
 
         self._dec_item_count(self.action_target)
@@ -660,8 +676,11 @@ class Actor(Entity):
     def get_throwable_items(self) -> [items.Item]:
         return [item_ for item_ in self.inventory.items() if item_[1]["Item"].throwable]
 
-    def get_drug_items(self) -> [items.Item]:
+    def get_drug_items(self) -> [items.Drug]:
         return [item_ for item_ in self.inventory.items() if isinstance(item_[1]["Item"], items.Drug)]
+
+    def get_power_sources(self) -> [items.PowerSource]:
+        return [item_ for item_ in self.inventory.items() if isinstance(item_[1]["Item"], items.PowerSource)]
 
     # Calls the appropriate attack function.
     def attempt_atk(
@@ -744,6 +763,10 @@ class Actor(Entity):
         self.action_target = drug_id
         self._set_action(self.Actions.USE_DRUG, self.gen_speed)
 
+    def attempt_charge(self, powersrc_id: str):
+        self.action_target = powersrc_id
+        self._set_action(self.Actions.CHARGE, self.gen_speed)
+
     # Checks for open doors around the Actor and closes them if they exist.
     def attempt_close_door(self) -> None:
         for x in range(-1, 2):
@@ -811,6 +834,9 @@ class Player(Actor):
         self.examine_target: Any = None
         self.item_selected: Optional[items.Item] = None
 
+        self.max_charge_loss_delay: int = 100  # The number of turns before losing a percent of charge.
+        self.charge_loss_delay = self.max_charge_loss_delay
+
         game_entities_.player = self
 
     def move(self) -> None:
@@ -854,6 +880,14 @@ class Player(Actor):
             return False
 
         super().attempt_move(x, y)
+
+    def update(self, game_time: int) -> None:
+        super().update(game_time)
+        self.charge_loss_delay -= 1
+
+        if self.charge_loss_delay == 0:
+            self.charge_percent -= 1
+            self.charge_loss_delay = self.max_charge_loss_delay
 
 
 class Turret(Actor):

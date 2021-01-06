@@ -47,8 +47,16 @@ class Drug(Item):
         effect: Callable[..., None]
     ) -> None:
         effects: dict = {
-            "use_stitch": drug_effects.use_sitch
+            "use_stitch": drug_effects.use_stitch
         }
 
         super().__init__(name, desc)
         self.effect = effects[effect]
+
+
+class PowerSource(Item):
+    def __init__(self, name: str, desc: str, charge_held: int, discharge_time: int) -> None:
+        super().__init__(name, desc)
+
+        self.discharge_time = discharge_time  # Amount of turns before self-discharges and is useless
+        self.charge_held = charge_held

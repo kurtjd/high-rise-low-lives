@@ -4,6 +4,22 @@ import entities
 import interface
 
 
+def get_letter_key(event: tcod.event) -> str:
+    key: Union[int, str] = event.sym
+
+    # If not a letter key, then do nothing.
+    if tcod.event.K_a <= key <= tcod.event.K_z:
+        key = chr(key)
+
+        # If the shift key was held, convert to upper-case.
+        if event.mod & tcod.event.KMOD_SHIFT:
+            key = key.upper()
+
+        return key
+    else:
+        return ''
+
+
 # A finite state machine used to manage state of game.
 class GameFSM:
     def __init__(
@@ -64,6 +80,13 @@ class GameFSM:
         )
 
         self.drug_screen_state: DrugScreenState = DrugScreenState(
+            self,
+            entities_,
+            game_interface,
+            player_
+        )
+
+        self.charge_screen_state: ChargeScreenState = ChargeScreenState(
             self,
             entities_,
             game_interface,
@@ -203,6 +226,8 @@ class PlayingState(BaseState):
             self.fsm.set_state(self.fsm.throw_screen_state)
         elif key == tcod.event.K_q:
             self.fsm.set_state(self.fsm.drug_screen_state)
+        elif key == tcod.event.K_c:
+            self.fsm.set_state(self.fsm.charge_screen_state)
         elif key == tcod.event.K_ESCAPE:
             raise SystemExit()
 
@@ -236,22 +261,9 @@ class WieldScreenState(BaseState):
         self.game_interface.wield_screen.render(console, self.player.get_wieldable_items())
 
     def handle_input(self, event: tcod.event) -> None:
-        key: Union[int, str] = event.sym
+        key: str = get_letter_key(event)
 
-        # The minus (-) key makes the player unarmed.
-        if key == tcod.event.K_MINUS:
-            self.player.attempt_wield(None)
-            self.fsm.reverse_state()
-
-        # If not a letter key, then do nothing.
-        elif tcod.event.K_a <= key <= tcod.event.K_z:
-            key = chr(key)
-
-            # If the shift key was held, convert to upper-case.
-            if event.mod & tcod.event.KMOD_SHIFT:
-                key = key.upper()
-
-            # Search the IDs of the player's wieldables for a match with the key pressed and then wield that.
+        if key:
             for wieldable in self.player.get_wieldable_items():
                 if wieldable[0] == key:
                     self.player.attempt_wield(wieldable[1]["Item"])
@@ -282,17 +294,9 @@ class InventoryScreenState(BaseState):
         self.game_interface.inventory_screen.render(console, self.player)
 
     def handle_input(self, event: tcod.event) -> None:
-        key: Union[int, str] = event.sym
+        key: str = get_letter_key(event)
 
-        # If not a letter key, then do nothing.
-        if tcod.event.K_a <= key <= tcod.event.K_z:
-            key = chr(key)
-
-            # If the shift key was held, convert to upper-case.
-            if event.mod & tcod.event.KMOD_SHIFT:
-                key = key.upper()
-
-            # Search the IDs of the player's inventory for a match with the key pressed and then describe that.
+        if key:
             for item in self.player.inventory.items():
                 if item[0] == key:
                     self.player.examine_target = item[1]["Item"]
@@ -323,17 +327,9 @@ class ThrowScreenState(BaseState):
         self.game_interface.throw_screen.render(console, self.player.get_throwable_items())
 
     def handle_input(self, event: tcod.event) -> None:
-        key: Union[int, str] = event.sym
+        key: str = get_letter_key(event)
 
-        # If not a letter key, then do nothing.
-        if tcod.event.K_a <= key <= tcod.event.K_z:
-            key = chr(key)
-
-            # If the shift key was held, convert to upper-case.
-            if event.mod & tcod.event.KMOD_SHIFT:
-                key = key.upper()
-
-            # Search the IDs of the player's throwables for a match with the key pressed and then throw that.
+        if key:
             for throwable in self.player.get_throwable_items():
                 if throwable[0] == key:
                     self.player.item_selected = throwable[1]["Item"]
@@ -390,20 +386,45 @@ class DrugScreenState(BaseState):
         self.game_interface.drug_screen.render(console, self.player.get_drug_items())
 
     def handle_input(self, event: tcod.event) -> None:
-        key: Union[int, str] = event.sym
+        key: str = get_letter_key(event)
 
-        # If not a letter key, then do nothing.
-        if tcod.event.K_a <= key <= tcod.event.K_z:
-            key = chr(key)
-
-            # If the shift key was held, convert to upper-case.
-            if event.mod & tcod.event.KMOD_SHIFT:
-                key = key.upper()
-
-            # Search the IDs of the player's throwables for a match with the key pressed and then throw that.
+        if key:
             for drug in self.player.get_drug_items():
                 if drug[0] == key:
                     self.player.attempt_use_drug(drug[0])
+                    self.fsm.set_state(self.fsm.playing_state)
+                    return
+
+    def handle_updates(self) -> None:
+        pass
+
+
+class ChargeScreenState(BaseState):
+    def __init__(
+            self,
+            fsm: GameFSM,
+            entities_: entities.GameEntities,
+            game_interface: interface.Interface,
+            player_: entities.Player
+    ) -> None:
+        super().__init__(fsm, entities_, game_interface, player_)
+
+    def enter(self) -> None:
+        pass
+
+    def exit(self) -> None:
+        pass
+
+    def handle_rendering(self, console: tcod.console) -> None:
+        self.game_interface.charge_screen.render(console, self.player.get_power_sources())
+
+    def handle_input(self, event: tcod.event) -> None:
+        key: str = get_letter_key(event)
+
+        if key:
+            for powersrc in self.player.get_power_sources():
+                if powersrc[0] == key:
+                    self.player.attempt_charge(powersrc[0])
                     self.fsm.set_state(self.fsm.playing_state)
                     return
 
