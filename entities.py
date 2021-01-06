@@ -30,6 +30,9 @@ class GameEntities:
     def get_all_at(self, x: int, y: int) -> list["Entity"]:
         return [entity_ for entity_ in self.all if entity_.x == x and entity_.y == y]
 
+    def get_top_entity_at(self, x: int, y: int) -> Optional["Entity"]:
+        return self.get_all_at(x, y)[-1]
+
     def get_actor_at(self, x: int, y: int) -> Optional["Actor"]:
         for actor_ in self.actors:
             if actor_.x == x and actor_.y == y:
@@ -336,6 +339,7 @@ class Actor(Entity):
         self.wielding: Optional[str] = None
         self.wearing: Optional[str] = None
         self.throwing: Optional[items.Item] = None
+        self.smokes: int = 0
 
         # These properties are used to track actions.
         self.action_target: Any = None  # Used when the target isn't an x/y
@@ -489,7 +493,7 @@ class Actor(Entity):
         # Check each point within the bullet path for something that can be attacked.
         prev_entity_cover: int = 0
         for point in self.bullet_path:
-            entity_at_point: Entity = self.game_entities.get_all_at(point[0], point[1])[-1]
+            entity_at_point: Entity = self.game_entities.get_top_entity_at(point[0], point[1])
             if isinstance(entity_at_point, Actor) and entity_at_point.health > 0:
                 entity_at_point.receive_hit(self, self.atk_dmg, 100 - prev_entity_cover, True)
                 return
@@ -515,7 +519,10 @@ class Actor(Entity):
             x = self.x
             y = self.y
         else:
-            entity_at_end: Entity = self.game_entities.get_all_at(self.bullet_path[-1][0], self.bullet_path[-1][1])[-1]
+            entity_at_end: Entity = self.game_entities.get_top_entity_at(
+                self.bullet_path[-1][0],
+                self.bullet_path[-1][1]
+            )
 
             # If the target isn't blocked or is an Actor, place explosive exactly where thrown:
             if not entity_at_end.blocked or isinstance(entity_at_end, Actor):
@@ -950,8 +957,8 @@ class ItemEntity(Entity):
 
     # ~~~ PUBLIC METHODS ~~~
 
-    def actor_pick_up(self, actor_: Actor) -> items.Item:
-        actor_.add_inventory(self.item, 1)
+    def actor_pick_up(self, actor_: Actor, amount: int = 1) -> items.Item:
+        self.item.on_pick_up(actor_, amount)
         self.remove()
 
         return self.item

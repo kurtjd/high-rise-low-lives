@@ -8,6 +8,17 @@ Mid-Term ToDo
 *When cameras selected during examine state show FOV
 *Have items show stats in description
 *Make cameras recalculate FOV only on certain actions to prevent lag thus allowing player block fov with objects
+*Make items stack on tile and let user select when picking up
+*Have items stack in inventory
+*Have power sources discharge over time in inventory (so they can't be hoarded)
+*Add confirmation before attempting certain actions like hacking
+*Allow quick select for things like wielding and drugs before opening new screen
+*Add ammo system
+*Add reload system
+*Classify weapons by type (ranged/melee, 1-handed/2-handed, etc) so you can't for example try to fire a samurai sword.
+*Add graphic and color field to data files
+*Make it so you can use a character in tile data instead of int for graphic
+*Have drugs start off unknown
 
 
 High-Rise: Low-Lives
@@ -20,9 +31,11 @@ Megacorp: Ruled by an industrious young woman, the past several years she disapp
 
 Gameplay-features:
 *Turn-based (explained by implant/drug that allows exponential thought speed essentially slowing time to a stand-still).
-*Randomly generated.
+*Inventory explained by device that allows to turn matter into information (a universal constructor).
+*Being able to see detailed stats about things explained by wearable augmented reality device.
+Procedurally generated.
 *Perma-death.
-*Auto-explore feature.
+*Auto-explore feature (maybe)
 *Must continuously recharge self by finding power cells (like food in other roguelikes).
 *Ranged combat with firearms.
 *Melee combat with high-tech melee weapons.
@@ -39,19 +52,20 @@ Gameplay-features:
 *Mental (if machine mind) and physical (if machine body) augmentations can be found to improve performance.
 *Intelligent enemies can be made neutral or even friendly with charisma.
 *Cover system for ranged combat (different things provide different levels of cover).
-*Can sabotage light sources and other electronics.
+*Can sabotage light sources (maybe) and other electronics.
 *Some enemies patrol while others guard a certain area. Can also change behavior in regards to events.
 *Passwords and keys can sometimes be found to unlock terminals and doors.
 *Some enemies can be bribed or hired.
 *Simple time travel mechanic through technomancy.
 *Different floor themes like residential area full of gang members and other criminals.
 *Can dual-wield weapons
+*Weapons can be modified.
 
 Races:
 Human: Completely natural, unable to be augmented but no need to charge.
 Cyborg: Human mind with a mostly mechanical body. Can augment body. Needs to charge occasionally.
 Android: Machine mind with mostly human body. Can augment mind. Needs to charge occasionally.
-Robot: Machine in both mind and body, thus can augment both. Needs to charge frequently.
+Robot: Machine in both mind and body, thus can augment both. Needs to charge frequently. Can't use drugs.
 
 Classes:
 Gunslinger: Skilled in guns and light armor.

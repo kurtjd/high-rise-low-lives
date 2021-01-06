@@ -508,7 +508,7 @@ class ExamineState(SelectState):
         key: int = event.sym
 
         if key == tcod.event.K_v:
-            self.player.examine_target = self.entities.get_all_at(self.select_x, self.select_y)[-1]
+            self.player.examine_target = self.entities.get_top_entity_at(self.select_x, self.select_y)
             self.fsm.set_state(self.fsm.desc_screen_state)
 
         self.move_cursor(key)

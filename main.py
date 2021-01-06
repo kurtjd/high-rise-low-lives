@@ -150,6 +150,7 @@ def spawn_items(
     throwables: dict = game_data_.throwables
     drugs: dict = game_data_.drugs
     power_sources: dict = game_data_.power_sources
+    misc_items: dict = game_data_.misc_items
 
     entities.ItemEntity(
         22,
@@ -235,6 +236,19 @@ def spawn_items(
             power_sources["BATTERY"]["Charge Held"],
             power_sources["BATTERY"]["Discharge Time"],
         ),
+        game_data_,
+        entities__,
+        game_interface_
+    )
+
+    entities.ItemEntity(
+        20,
+        19,
+        misc_items["CIGARETTE"]["Name"],
+        misc_items["CIGARETTE"]["Description"],
+        misc_items["CIGARETTE"]["Graphic"],
+        misc_items["CIGARETTE"]["Color"],
+        items.Cigarette(misc_items["CIGARETTE"]["Name"], misc_items["CIGARETTE"]["Description"]),
         game_data_,
         entities__,
         game_interface_

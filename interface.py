@@ -215,10 +215,18 @@ class Interface:
                 fg=tcod.white
             )
 
+            # Show currency
+            console.print(
+                x=self.x + 2,
+                y=self.y + 18,
+                string=f"Smokes: {self.player.smokes}",
+                fg=tcod.gold
+            )
+
             # Show game stats
             console.print(
                 x=self.x + 2,
-                y=self.y + 21,
+                y=self.y + 22,
                 string=f"Floor: {self.floor}       Time: {self.time}",
                 fg=tcod.flame
             )

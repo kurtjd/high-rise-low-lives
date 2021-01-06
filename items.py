@@ -1,4 +1,5 @@
 from typing import Callable
+import entities
 import drug_effects
 
 
@@ -16,6 +17,9 @@ class Item:
         self.desc: str = desc
         self.throwable: bool = throwable
         self.wieldable: bool = wieldable
+
+    def on_pick_up(self, src_actor: "entities.Actor", amount: int = 1):
+        src_actor.add_inventory(self, amount)
 
 
 class Weapon(Item):
@@ -60,3 +64,11 @@ class PowerSource(Item):
 
         self.discharge_time = discharge_time  # Amount of turns before self-discharges and is useless
         self.charge_held = charge_held
+
+
+class Cigarette(Item):
+    def __init__(self, name: str, desc: str) -> None:
+        super().__init__(name, desc)
+
+    def on_pick_up(self, src_actor: "entities.Actor", amount: int = 1):
+        src_actor.smokes += amount
