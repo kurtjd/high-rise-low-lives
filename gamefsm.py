@@ -1,5 +1,6 @@
-from typing import Union, Optional
+from typing import Union, Optional, Any
 import tcod
+import rendering
 import entities
 import interface
 
@@ -121,10 +122,10 @@ class GameFSM:
         self.state = self.prev_states.pop()
         self.state.enter()
 
-    def handle_rendering(self, window: tcod.context.Context, console: tcod.Console) -> None:
-        console.clear()
-        self.state.handle_rendering(console)
-        window.present(console)
+    def handle_rendering(self, window: Any, surface: Any) -> None:
+        rendering.clear_surface(surface)
+        self.state.handle_rendering(surface)
+        rendering.present_surface(window, surface)
 
     def handle_input(self) -> None:
         for event in tcod.event.wait():
@@ -163,7 +164,7 @@ class BaseState:
     def exit(self) -> None:
         pass
 
-    def handle_rendering(self, console: tcod.Console) -> None:
+    def handle_rendering(self, surface: Any) -> None:
         pass
 
     def handle_input(self, event: tcod.event) -> None:
@@ -192,10 +193,10 @@ class PlayingState(BaseState):
     def exit(self) -> None:
         pass
 
-    def handle_rendering(self, console: tcod.Console) -> None:
-        self.game_interface.stats_box.render(console)
-        self.game_interface.message_box.render(console)
-        self.entities.render_all(console)
+    def handle_rendering(self, surface: Any) -> None:
+        self.game_interface.stats_box.render(surface)
+        self.game_interface.message_box.render(surface)
+        self.entities.render_all(surface)
 
     def handle_input(self, event: tcod.event) -> None:
         key: int = event.sym
@@ -257,15 +258,15 @@ class WieldScreenState(BaseState):
     def exit(self) -> None:
         pass
 
-    def handle_rendering(self, console: tcod.Console) -> None:
-        self.game_interface.wield_screen.render(console, self.player.get_wieldable_items())
+    def handle_rendering(self, surface: Any) -> None:
+        self.game_interface.wield_screen.render(surface, self.player.get_wieldable_items())
 
     def handle_input(self, event: tcod.event) -> None:
-        key: str = get_letter_key(event)
+        key_char: str = get_letter_key(event)
 
-        if key:
+        if key_char:
             for wieldable in self.player.get_wieldable_items():
-                if wieldable[0] == key:
+                if wieldable[0] == key_char:
                     self.player.attempt_wield(wieldable[1]["Item"])
                     self.fsm.reverse_state()
                     return
@@ -290,15 +291,15 @@ class InventoryScreenState(BaseState):
     def exit(self) -> None:
         pass
 
-    def handle_rendering(self, console: tcod.Console) -> None:
-        self.game_interface.inventory_screen.render(console, self.player)
+    def handle_rendering(self, surface: Any) -> None:
+        self.game_interface.inventory_screen.render(surface, self.player)
 
     def handle_input(self, event: tcod.event) -> None:
-        key: str = get_letter_key(event)
+        key_char: str = get_letter_key(event)
 
-        if key:
+        if key_char:
             for item in self.player.inventory.items():
-                if item[0] == key:
+                if item[0] == key_char:
                     self.player.examine_target = item[1]["Item"]
                     self.fsm.set_state(self.fsm.desc_screen_state)
                     return
@@ -323,15 +324,15 @@ class ThrowScreenState(BaseState):
     def exit(self) -> None:
         pass
 
-    def handle_rendering(self, console: tcod.Console) -> None:
-        self.game_interface.throw_screen.render(console, self.player.get_throwable_items())
+    def handle_rendering(self, surface: Any) -> None:
+        self.game_interface.throw_screen.render(surface, self.player.get_throwable_items())
 
     def handle_input(self, event: tcod.event) -> None:
-        key: str = get_letter_key(event)
+        key_char: str = get_letter_key(event)
 
-        if key:
+        if key_char:
             for throwable in self.player.get_throwable_items():
-                if throwable[0] == key:
+                if throwable[0] == key_char:
                     self.player.item_selected = throwable[1]["Item"]
                     self.fsm.set_state(self.fsm.select_throw_state)
                     return
@@ -356,8 +357,8 @@ class DescScreenState(BaseState):
     def exit(self) -> None:
         pass
 
-    def handle_rendering(self, console: tcod.console) -> None:
-        self.game_interface.description_screen.render(console, self.player.examine_target)
+    def handle_rendering(self, surface: Any) -> None:
+        self.game_interface.description_screen.render(surface, self.player.examine_target)
 
     def handle_input(self, event: tcod.event) -> None:
         pass
@@ -382,8 +383,8 @@ class DrugScreenState(BaseState):
     def exit(self) -> None:
         pass
 
-    def handle_rendering(self, console: tcod.console) -> None:
-        self.game_interface.drug_screen.render(console, self.player.get_drug_items())
+    def handle_rendering(self, surface: Any) -> None:
+        self.game_interface.drug_screen.render(surface, self.player.get_drug_items())
 
     def handle_input(self, event: tcod.event) -> None:
         key: str = get_letter_key(event)
@@ -415,15 +416,15 @@ class ChargeScreenState(BaseState):
     def exit(self) -> None:
         pass
 
-    def handle_rendering(self, console: tcod.console) -> None:
-        self.game_interface.charge_screen.render(console, self.player.get_power_sources())
+    def handle_rendering(self, surface: Any) -> None:
+        self.game_interface.charge_screen.render(surface, self.player.get_power_sources())
 
     def handle_input(self, event: tcod.event) -> None:
-        key: str = get_letter_key(event)
+        key_char: str = get_letter_key(event)
 
-        if key:
+        if key_char:
             for powersrc in self.player.get_power_sources():
-                if powersrc[0] == key:
+                if powersrc[0] == key_char:
                     self.player.attempt_charge(powersrc[0])
                     self.fsm.set_state(self.fsm.playing_state)
                     return
@@ -532,11 +533,11 @@ class SelectTargetState(SelectState):
         self.player.bullet_path = []
         super().enter()
 
-    def handle_rendering(self, console: tcod.Console) -> None:
-        super().handle_rendering(console)
+    def handle_rendering(self, surface: Any) -> None:
+        super().handle_rendering(surface)
 
         for point in self.player.bullet_path:
-            console.print(point[0], point[1], '*', tcod.red)
+            rendering.render(surface, '*', point[0], point[1], (255, 0, 0))
 
     def update_bullet_path(self, extend: bool = False) -> None:
         self.player.bullet_path = self.player.get_line_of_sight(self.select_x, self.select_y, extend)
@@ -571,6 +572,6 @@ class SelectThrowState(SelectTargetState):
         self.move_cursor(key)
         self.update_bullet_path(False)
 
-        if event.sym == tcod.event.K_RETURN:
+        if key == tcod.event.K_RETURN:
             self.player.attempt_throw(self.select_x, self.select_y, self.player.item_selected, self.player.bullet_path)
             self.fsm.set_state(self.fsm.playing_state)

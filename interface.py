@@ -1,5 +1,5 @@
 from typing import Optional, Union, Any
-import tcod
+import rendering
 import entities
 
 
@@ -35,26 +35,16 @@ class Interface:
             self.x: int = x
             self.y: int = y
 
-        def render(self, console: tcod.Console, thing: Any) -> None:
-            console.print(
-                x=self.x,
-                y=self.y,
-                string=f"{thing.name}",
-                fg=tcod.green
-            )
-            console.print(
-                x=self.x,
-                y=self.y + 2,
-                string=f"{thing.desc}",
-                fg=tcod.white
-            )
+        def render(self, surface: Any, thing: Any) -> None:
+            rendering.render(surface, thing.name, self.x, self.y, (0, 255, 0))
+            rendering.render(surface, thing.desc, self.x, self.y + 2, (255, 255, 255))
 
     class SelectScreen:
         def __init__(self, x: int = 0, y: int = 0) -> None:
             self.x: int = x
             self.y: int = y
 
-        def print_items(self, items: list[tuple[str, dict]], console: tcod.Console):
+        def print_items(self, items: list[tuple[str, dict]], surface: Any):
             items.sort()
             for item in enumerate(items):
                 # For smoother grammar
@@ -62,89 +52,96 @@ class Interface:
                 if amount == 1:
                     amount = 'a'
 
-                console.print(
-                    x=self.x,
-                    y=self.y + 2 + item[0],
-                    string=f"{item[1][0]} - {amount} {item[1][1]['Item'].name}",
-                    fg=tcod.cyan
+                rendering.render(
+                    surface,
+                    f"{item[1][0]} - {amount} {item[1][1]['Item'].name}",
+                    self.x,
+                    self.y + 2 + item[0],
+                    (0, 255, 255)
                 )
 
     class WieldScreen(SelectScreen):
         def __init__(self, x: int = 0, y: int = 0) -> None:
             super().__init__(x, y)
 
-        def render(self, console: tcod.Console, wieldables: list[tuple[str, dict]]) -> None:
-            console.print(
-                x=self.x,
-                y=self.y,
-                string="Wield which weapon?",
-                fg=tcod.green
+        def render(self, surface: Any, wieldables: list[tuple[str, dict]]) -> None:
+            rendering.render(
+                surface,
+                "Wield which weapon?",
+                self.x,
+                self.y,
+                (0, 255, 0)
             )
-            console.print(
-                x=self.x,
-                y=self.y + 1,
-                string="- unarmed",
-                fg=tcod.white
+            rendering.render(
+                surface,
+                "- unarmed",
+                self.x,
+                self.y + 1,
+                (255, 255, 255)
             )
 
-            self.print_items(wieldables, console)
+            self.print_items(wieldables, surface)
 
     class InventoryScreen(SelectScreen):
         def __init__(self, x: int = 0, y: int = 0) -> None:
             super().__init__(x, y)
 
-        def render(self, console: tcod.Console, actor_: "entities.Actor") -> None:
-            console.print(
+        def render(self, surface: Any, actor_: "entities.Actor") -> None:
+            rendering.render(
+                surface,
+                f"Inventory: {len(actor_.inventory)} / {actor_.MAX_INVENTORY_SIZE} slots",
                 self.x,
                 self.y,
-                string=f"Inventory: {len(actor_.inventory)} / {actor_.MAX_INVENTORY_SIZE} slots",
-                fg=tcod.green
+                (0, 255, 0)
             )
 
             items: list[tuple[str, dict]] = [item_ for item_ in actor_.inventory.items()]
-            self.print_items(items, console)
+            self.print_items(items, surface)
 
     class ThrowScreen(SelectScreen):
         def __init__(self, x: int = 0, y: int = 0) -> None:
             super().__init__(x, y)
 
-        def render(self, console: tcod.Console, throwables: list[tuple[str, dict]]) -> None:
-            console.print(
-                x=self.x,
-                y=self.y,
-                string="Throw which item?",
-                fg=tcod.green
+        def render(self, surface: Any, throwables: list[tuple[str, dict]]) -> None:
+            rendering.render(
+                surface,
+                "Throw which item?",
+                self.x,
+                self.y,
+                (0, 255, 0)
             )
 
-            self.print_items(throwables, console)
+            self.print_items(throwables, surface)
 
     class DrugScreen(SelectScreen):
         def __init__(self, x: int = 0, y: int = 0) -> None:
             super().__init__(x, y)
 
-        def render(self, console: tcod.Console, drugs: list[tuple[str, dict]]) -> None:
-            console.print(
+        def render(self, surface: Any, drugs: list[tuple[str, dict]]) -> None:
+            rendering.render(
+                surface,
+                "Use which drug?",
                 self.x,
                 self.y,
-                string=f"Use which drug?",
-                fg=tcod.green
+                (0, 255, 0)
             )
 
-            self.print_items(drugs, console)
+            self.print_items(drugs, surface)
 
     class ChargeScreen(SelectScreen):
         def __init__(self, x: int = 0, y: int = 0) -> None:
             super().__init__(x, y)
 
-        def render(self, console: tcod.Console, power_sources: list[tuple[str, dict]]) -> None:
-            console.print(
+        def render(self, surface: Any, power_sources: list[tuple[str, dict]]) -> None:
+            rendering.render(
+                surface,
+                "Charge with which power-source?",
                 self.x,
                 self.y,
-                string=f"Charge with which power-source?",
-                fg=tcod.green
+                (0, 255, 0)
             )
 
-            self.print_items(power_sources, console)
+            self.print_items(power_sources, surface)
 
     class StatsBox:
         # ~~~ PRIVATE METHODS ~~~
@@ -171,64 +168,70 @@ class Interface:
             self.time: int = time
             self.floor: int = floor
 
-        def render(self, console: tcod.Console) -> None:
+        def render(self, surface: Any) -> None:
             # Makes little barrier
             for i in range(self.height):
-                console.print(x=self.x, y=self.y+i, string=chr(9474), fg=tcod.green)
+                rendering.render(surface, chr(9474), self.x, self.y + i, (0, 255, 0))
 
             # Shows who you are
-            console.print(
-                x=self.x+2,
-                y=self.y+1,
-                string=f"{self.player.name}\nThe {self.player.race} {self.player.class_name}",
-                fg=tcod.cyan,
+            rendering.render(
+                surface,
+                f"{self.player.name}\nThe {self.player.race} {self.player.class_name}",
+                self.x + 2,
+                self.y + 1,
+                (0, 255, 255)
             )
 
             # Show stats
-            console.print(
-                x=self.x + 2,
-                y=self.y + 5,
-                string=(
+            rendering.render(
+                surface,
+                (
                     f"HP: {self.player.health}        MP: {self.player.mp}\n"
                     f"Charge: {self.player.charge_percent}%    AC: {self.player.ac}"
                 ),
-                fg=tcod.purple
+                self.x + 2,
+                self.y + 5,
+                (128, 0, 128)
             )
 
             # Show attributes
-            console.print(
-                x=self.x + 2,
-                y=self.y + 10,
-                string=(
+            rendering.render(
+                surface,
+                (
                     f"Muscle: {self.player.muscle}     Smarts: {self.player.smarts}\n"
                     f"Reflexes: {self.player.reflexes}   Charm: {self.player.charm}\n"
                     f"Grit: {self.player.grit}       Wits: {self.player.wits}"
                 ),
-                fg=tcod.pink
+                self.x + 2,
+                self.y + 10,
+                (255, 192, 203)
             )
 
             # Show worn
-            console.print(
-                x=self.x + 2,
-                y=self.y + 16,
-                string=f"Wielding: {self.player.wielding}\nWearing: {self.player.wearing}",
-                fg=tcod.white
+            rendering.render(
+                surface,
+                f"Wielding: {self.player.wielding}\nWearing: {self.player.wearing}",
+                self.x + 2,
+                self.y + 16,
+                (255, 255, 255)
             )
 
             # Show currency
-            console.print(
-                x=self.x + 2,
-                y=self.y + 18,
-                string=f"Smokes: {self.player.smokes}",
-                fg=tcod.gold
+            rendering.render(
+                surface,
+                f"Smokes: {self.player.smokes}",
+                self.x + 2,
+                self.y + 18,
+                (255, 215, 0)
             )
 
             # Show game stats
-            console.print(
-                x=self.x + 2,
-                y=self.y + 22,
-                string=f"Floor: {self.floor}       Time: {self.time}",
-                fg=tcod.flame
+            rendering.render(
+                surface,
+                f"Floor: {self.floor}       Time: {self.time}",
+                self.x + 2,
+                self.y + 22,
+                (255, 63, 0)
             )
 
     class MessageBox:
@@ -250,15 +253,10 @@ class Interface:
             self.messages.append(dict({"Text": msg, "Color": color}))
 
         # Draws the messgae box to the screen.
-        def render(self, console: tcod.Console) -> None:
+        def render(self, surface: Any) -> None:
             # Makes little barrier
             for i in range(self.width):
-                console.print(x=self.x + i, y=self.y, string=chr(9472), fg=tcod.green)
+                rendering.render(surface, chr(9472), self.x + i, self.y, (0, 255, 0))
 
             for msg in enumerate(self.messages):
-                console.print(
-                    x=self.x + 1,
-                    y=self.y + 1 + msg[0],
-                    string=f"> {msg[1]['Text']}",
-                    fg=msg[1]['Color']
-                )
+                rendering.render(surface, f"> {msg[1]['Text']}", self.x + 1, self.y + 1 + msg[0], msg[1]['Color'])

@@ -3,6 +3,7 @@ import time
 from enum import Enum, auto
 from typing import Optional, Callable, Any
 import tcod
+import rendering
 import databases
 import interface
 import items
@@ -10,7 +11,7 @@ import ai
 
 
 class GameEntities:
-    def __init__(self, window: tcod.context.Context, console: tcod.Console) -> None:
+    def __init__(self, window: Any, surface: Any) -> None:
         self.all: list[Entity] = []
         self.tiles: list[Tile] = []
         self.actors:  list[Actor] = []
@@ -25,7 +26,7 @@ class GameEntities:
         self.player: Optional[Player] = None
 
         self.window = window
-        self.console = console
+        self.surface = surface
 
     def get_all_at(self, x: int, y: int) -> list["Entity"]:
         return [entity_ for entity_ in self.all if entity_.x == x and entity_.y == y]
@@ -67,36 +68,36 @@ class GameEntities:
         return None
 
     # Draws all game entities to the screen.
-    def render_all(self, console: tcod.Console) -> None:
+    def render_all(self, surface: Any) -> None:
         for tile_ in self.tiles:
-            tile_.render(console)
+            tile_.render(surface)
 
         for vent_ in self.vents:
-            vent_.render(console)
+            vent_.render(surface)
 
         for camera_ in self.cameras:
-            camera_.render(console)
+            camera_.render(surface)
 
         for trap_ in self.traps:
-            trap_.render(console)
+            trap_.render(surface)
 
         for item_ in self.items:
-            item_.render(console)
+            item_.render(surface)
 
         for door_ in self.doors:
-            door_.render(console)
+            door_.render(surface)
 
         for terminal_ in self.terminals:
-            terminal_.render(console)
+            terminal_.render(surface)
 
         for turret_ in self.turrets:
-            turret_.render(console)
+            turret_.render(surface)
 
         for explosive_ in self.explosives:
-            explosive_.render(console)
+            explosive_.render(surface)
 
         for actor_ in self.actors:
-            actor_.render(console)
+            actor_.render(surface)
 
     # Called every tick of time to update entities.
     def update_all(self, game_time: int) -> None:
@@ -167,9 +168,9 @@ class Entity:
     # ~~~ PUBLIC METHODS ~~~
 
     # Draws a game entity to the screen
-    def render(self, console: tcod.Console) -> None:
+    def render(self, surface: Any) -> None:
         if self.visible:
-            console.print(x=self.x, y=self.y, string=self.graphic, fg=self.color, bg=self.bgcolor)
+            rendering.render(surface, self.graphic, self.x, self.y, self.color, self.bgcolor)
 
     def update(self, game_time: int) -> None:
         pass
@@ -218,15 +219,10 @@ class Entity:
             color: tuple[int, int, int],
             delay: float
     ) -> None:
-        self.game_entities.render_all(self.game_entities.console)
+        self.game_entities.render_all(self.game_entities.surface)
         for point in points:
-            self.game_entities.console.print(
-                x=point[0],
-                y=point[1],
-                string=char,
-                fg=color
-            )
-        self.game_entities.window.present(self.game_entities.console)
+            rendering.render(self.game_entities.surface, char, point[0], point[1], color)
+        self.game_entities.window.present(self.game_entities.surface)
         time.sleep(delay)
 
     def compute_fov(self, radius: int, ignore_cover: bool = True) -> list[tuple[int, int]]:
@@ -511,7 +507,7 @@ class Actor(Entity):
             else:
                 prev_entity_cover = entity_at_point.cover_percent
 
-            self.render_sleep([(point[0], point[1])], ')', tcod.red, 0.01)
+            self.render_sleep([(point[0], point[1])], ')', (255, 0, 0), 0.01)
 
         self.game_interface.message_box.add_msg(
             f"{self.name} shoots at nothing.", self.game_data.colors["ERROR_MSG"]
@@ -522,7 +518,7 @@ class Actor(Entity):
     def _throw(self) -> None:
         # Draw the throwable as it goes through the air
         for point in self.bullet_path:
-            self.render_sleep([(point[0], point[1])], ')', tcod.red, 0.01)
+            self.render_sleep([(point[0], point[1])], ')', (255, 0, 0), 0.01)
 
         x: int
         y: int
@@ -1288,7 +1284,6 @@ class Trap(Entity):
             return
 
         # Later implement different nasty effects such as shocking the player.
-        print("Trap triggered!")
         self.triggered = True
         self.visible = True
 
@@ -1341,7 +1336,7 @@ class Explosive(Entity):
                     actor.receive_hit(self, round(self.damage / (i + 1)), 100)
                     actors_hit.append(actor)
 
-            self.render_sleep(blast_zone, '*', tcod.red, 0.05)
+            self.render_sleep(blast_zone, '*', (255, 0, 0), 0.05)
 
         self.remove()
 
