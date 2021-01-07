@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Optional
 import entities
 import drug_effects
 
@@ -24,23 +24,46 @@ class Item:
 
 class Weapon(Item):
     # ~~~ STATIC METHODS ~~~
-    def __init__(self, name: str, desc: str, dmg: int, speed: int, accuracy: int) -> None:
+    def __init__(
+            self,
+            name: str,
+            desc: str,
+            dmg: int,
+            speed: int,
+            accuracy: int,
+            distance: str,
+            weapon_type: str,
+            hands: int,
+            caliber: Optional[str] = None,
+            mag_capacity: Optional[int] = None
+    ) -> None:
         super().__init__(name, desc, False, True)
         self.dmg: int = dmg
         self.speed: int = speed
         self.accuracy: int = accuracy
+        self.distance: str = distance
+        self.weapon_type: str = weapon_type
+        self.hands: int = hands
+
+        # Pertains to ranged only
+        self.caliber: str = caliber
+        self.mag_capacity: int = mag_capacity
+        self.rounds_in_mag: int = 0
 
 
 class Grenade(Item):
     def __init__(
         self,
         name: str,
-        desc: str
+        desc: str,
+        damage: int,
+        blast_radius: int,
+        fuse: int
     ) -> None:
         super().__init__(name, desc, True, False)
-        self.damage = 80
-        self.blast_radius = 3
-        self.fuse = 20
+        self.damage = damage
+        self.blast_radius = blast_radius
+        self.fuse = fuse
 
 
 class Drug(Item):
@@ -72,3 +95,10 @@ class Cigarette(Item):
 
     def on_pick_up(self, src_actor: "entities.Actor", amount: int = 1):
         src_actor.smokes += amount
+
+
+class Ammo(Item):
+    def __init__(self, name: str, desc: str, caliber: str, ammo_type: str):
+        super().__init__(name, desc)
+        self.caliber = caliber
+        self.ammo_type = ammo_type

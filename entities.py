@@ -336,7 +336,7 @@ class Actor(Entity):
         # Inventory/Equipped
         self.MAX_INVENTORY_SIZE: int = 52
         self.inventory: dict = {}
-        self.wielding: Optional[str] = None
+        self.wielding: Optional[items.Weapon] = None
         self.wearing: Optional[str] = None
         self.throwing: Optional[items.Item] = None
         self.smokes: int = 0
@@ -378,11 +378,22 @@ class Actor(Entity):
                 return chr(item_id)
 
     # Decreases the amount of an item in the inventory and deletes it if zero.
-    def _dec_item_count(self, item_id: str, amount: int = 1):
+    def _dec_item_count(self, item_id: str, amount: int = 1) -> None:
         self.inventory[item_id]["Amount"] -= amount
 
         if self.inventory[item_id]["Amount"] == 0:
             del self.inventory[item_id]
+
+    # Called when the player fires a ranged weapon and we need to decrease the correct ammo from inventory.
+    def _dec_ammo_count(self, caliber: str, amount: int = 1) -> None:
+        for ammo_ in self.inventory.items():
+            if isinstance(ammo_[1]["Item"], items.Ammo) and ammo_[1]["Item"].caliber == caliber:
+                ammo_[1]["Amount"] -= amount
+
+                if ammo_[1]["Amount"] == 0:
+                    del self.inventory[ammo_[0]]
+
+                return
 
     # Actors can potentially be reanimated so it is only "playing" dead
     def _play_dead(self) -> None:
@@ -506,6 +517,8 @@ class Actor(Entity):
             f"{self.name} shoots at nothing.", self.game_data.colors["ERROR_MSG"]
         )
 
+        self._dec_ammo_count(self.wielding.caliber)
+
     def _throw(self) -> None:
         # Draw the throwable as it goes through the air
         for point in self.bullet_path:
@@ -559,7 +572,7 @@ class Actor(Entity):
                 f"{self.name} readies his fists.", self.game_data.colors["SUCCESS_MSG"]
             )
         else:
-            self.wielding = self.action_target.name
+            self.wielding = self.action_target
             self.atk_dmg = self.base_atk_dmg + self.action_target.dmg
             self.game_interface.message_box.add_msg(
                 f"{self.name} wields a {self.action_target.name}.", self.game_data.colors["SUCCESS_MSG"]
@@ -621,6 +634,7 @@ class Actor(Entity):
         # Calculate random and shit later
         if hit_chance:
             pass
+
         self.health -= atk_dmg
 
         # Send different message depending on what is attacked with.
@@ -637,10 +651,12 @@ class Actor(Entity):
                 if ranged:
                     hit_msg = (
                         f"{src_entity.name} shoots {self.name} with his"
-                        f"{src_entity.wielding} for {atk_dmg} damage!"
+                        f" {src_entity.wielding.name} for {atk_dmg} damage!"
                     )
                 else:
-                    hit_msg = f"{src_entity.name} hits {self.name} with his {src_entity.wielding} for {atk_dmg} damage!"
+                    hit_msg = (
+                        f"{src_entity.name} hits {self.name} with his {src_entity.wielding.name} for {atk_dmg} damage!"
+                    )
             elif isinstance(src_entity, Explosive):
                 hit_msg = f"{self.name} is caught in an explosion and receives {atk_dmg} damage!"
             else:
@@ -689,6 +705,14 @@ class Actor(Entity):
     def get_power_sources(self) -> [items.PowerSource]:
         return [item_ for item_ in self.inventory.items() if isinstance(item_[1]["Item"], items.PowerSource)]
 
+    def get_ammo_amount(self, caliber: str) -> int:
+        total_amount = 0
+        for ammo_ in self.inventory.items():
+            if isinstance(ammo_[1]["Item"], items.Ammo) and ammo_[1]["Item"].caliber == caliber:
+                total_amount += ammo_[1]["Amount"]
+
+        return total_amount
+
     # Calls the appropriate attack function.
     def attempt_atk(
             self,
@@ -700,8 +724,20 @@ class Actor(Entity):
         if not ranged:
             self._set_action(self.Actions.ATK_MELEE, self.atk_speed, x, y)
         else:
-            self.bullet_path = bullet_path
-            self._set_action(self.Actions.ATK_RANGED, self.atk_speed, x, y)
+            if self.wielding is not None and self.wielding.distance == "ranged":
+                # Is the player out of ammo?
+                if self.get_ammo_amount(self.wielding.caliber) > 0:
+                    self.bullet_path = bullet_path
+                    self._set_action(self.Actions.ATK_RANGED, self.atk_speed, x, y)
+                elif self.is_player:
+                    self.game_interface.message_box.add_msg(
+                        f"You are out of ammo!", self.game_data.colors["ERROR_MSG"]
+                    )
+            else:
+                # Is the player not wielding a ranged weapon?
+                self.game_interface.message_box.add_msg(
+                    f"You are not wielding a ranged weapon.", self.game_data.colors["ERROR_MSG"]
+                )
 
     # Makes sure the Actor can actually move to where it wants to go.
     def attempt_move(self, x: int, y: int) -> bool:

@@ -3,6 +3,8 @@
 	{
 		"Name": "Grenade",
 		"Description": "Blows stuff up.",
-		"Damage": 100
+		"Damage": 100,
+		"Blast Radius": 3,
+		"Fuse": 20
 	}
 }

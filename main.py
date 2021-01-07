@@ -104,7 +104,10 @@ def spawn_enemies(
         game_data_.weapons["BATON"]["Description"],
         game_data_.weapons["BATON"]["Damage"],
         game_data_.weapons["BATON"]["Speed"],
-        game_data_.weapons["BATON"]["Accuracy"]
+        game_data_.weapons["BATON"]["Accuracy"],
+        game_data_.weapons["BATON"]["Distance"],
+        game_data_.weapons["BATON"]["Type"],
+        game_data_.weapons["BATON"]["Hands"]
     ))
     enemy1.attempt_wield(enemy1.inventory['A']["Item"])
 
@@ -134,7 +137,12 @@ def spawn_enemies(
         game_data_.weapons["TEC9"]["Description"],
         game_data_.weapons["TEC9"]["Damage"],
         game_data_.weapons["TEC9"]["Speed"],
-        game_data_.weapons["TEC9"]["Accuracy"]
+        game_data_.weapons["TEC9"]["Accuracy"],
+        game_data_.weapons["TEC9"]["Distance"],
+        game_data_.weapons["TEC9"]["Type"],
+        game_data_.weapons["TEC9"]["Hands"],
+        game_data_.weapons["TEC9"]["Caliber"],
+        game_data_.weapons["TEC9"]["Mag Capacity"]
     ))
     enemy2.attempt_wield(enemy2.inventory['A']["Item"])
 
@@ -151,6 +159,7 @@ def spawn_items(
     drugs: dict = game_data_.drugs
     power_sources: dict = game_data_.power_sources
     misc_items: dict = game_data_.misc_items
+    ammo: dict = game_data_.ammo
 
     entities.ItemEntity(
         22,
@@ -164,7 +173,10 @@ def spawn_items(
             weapons["SAMURAI_SWORD"]["Description"],
             weapons["SAMURAI_SWORD"]["Damage"],
             weapons["SAMURAI_SWORD"]["Speed"],
-            weapons["SAMURAI_SWORD"]["Accuracy"]
+            weapons["SAMURAI_SWORD"]["Accuracy"],
+            weapons["SAMURAI_SWORD"]["Distance"],
+            weapons["SAMURAI_SWORD"]["Type"],
+            weapons["SAMURAI_SWORD"]["Hands"],
         ),
         game_data_,
         entities__,
@@ -183,7 +195,12 @@ def spawn_items(
             weapons["TEC9"]["Description"],
             weapons["TEC9"]["Damage"],
             weapons["TEC9"]["Speed"],
-            weapons["TEC9"]["Accuracy"]
+            weapons["TEC9"]["Accuracy"],
+            weapons["TEC9"]["Distance"],
+            weapons["TEC9"]["Type"],
+            weapons["TEC9"]["Hands"],
+            weapons["TEC9"]["Caliber"],
+            weapons["TEC9"]["Mag Capacity"]
         ),
         game_data_,
         entities__,
@@ -200,6 +217,9 @@ def spawn_items(
         items.Grenade(
             throwables["GRENADE"]["Name"],
             throwables["GRENADE"]["Description"],
+            throwables["GRENADE"]["Damage"],
+            throwables["GRENADE"]["Blast Radius"],
+            throwables["GRENADE"]["Fuse"]
         ),
         game_data_,
         entities__,
@@ -249,6 +269,24 @@ def spawn_items(
         misc_items["CIGARETTE"]["Graphic"],
         misc_items["CIGARETTE"]["Color"],
         items.Cigarette(misc_items["CIGARETTE"]["Name"], misc_items["CIGARETTE"]["Description"]),
+        game_data_,
+        entities__,
+        game_interface_
+    )
+
+    entities.ItemEntity(
+        18,
+        17,
+        ammo["9MM_FMJ"]["Name"],
+        ammo["9MM_FMJ"]["Description"],
+        '(',  # Graphic hard-coded for now
+        tcod.gray,
+        items.Ammo(
+            ammo["9MM_FMJ"]["Name"],
+            ammo["9MM_FMJ"]["Description"],
+            ammo["9MM_FMJ"]["Caliber"],
+            ammo["9MM_FMJ"]["Type"]
+        ),
         game_data_,
         entities__,
         game_interface_

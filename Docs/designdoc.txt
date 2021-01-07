@@ -1,5 +1,8 @@
 Short-Term ToDo
 ===============
+*Have guns track ammo in magazine and reload when empty.
+*Have guns track specific ammo associated with it and not just caliber and allow player to select specific round to load
+*Decrease from throwable in inventory when thrown.
 
 
 Mid-Term ToDo
@@ -13,9 +16,6 @@ Mid-Term ToDo
 *Have power sources discharge over time in inventory (so they can't be hoarded)
 *Add confirmation before attempting certain actions like hacking
 *Allow quick select for things like wielding and drugs before opening new screen
-*Add ammo system
-*Add reload system
-*Classify weapons by type (ranged/melee, 1-handed/2-handed, etc) so you can't for example try to fire a samurai sword.
 *Add graphic and color field to data files
 *Make it so you can use a character in tile data instead of int for graphic
 *Have drugs start off unknown
@@ -29,11 +29,20 @@ Concept: In the future an evil megacorp has taken over the world. Technology has
 
 Megacorp: Ruled by an industrious young woman, the past several years she disappeared from the public eye and has become a mystery. Some say she is dead others say she controls things from the shadows. The reality is she has been searching for a way to transcend the human body and become one with cyberspace using her vast wealth and connections in order to maintain full control of humanity for eternity.
 
-Gameplay-features:
-*Turn-based (explained by implant/drug that allows exponential thought speed essentially slowing time to a stand-still).
-*Inventory explained by device that allows to turn matter into information (a universal constructor).
+Lore:
+*Turn-based feature explained by implant/drug that allows exponential thought speed essentially slowing time to a stand-still.
+*Inventory explained by device that can compress matter (similar to file compression)
 *Being able to see detailed stats about things explained by wearable augmented reality device.
-Procedurally generated.
+*Brain-machine interfaces currently non-existent (except this is the new tech you're trying to steal) due to unable to crack the brain.
+*Attempts at bio-engineering for enhanced beings predates cybernetic augmentation, however was a failure and resulted in abominations and deranged/mindless things.
+*Legal currency is fully-digitized and heavily tracked to minimize illegal activity. Other forms of currency had to be used for the black market. Cigarettes have become a defacto black-market currency because the MegaCorp had tobacco farms, among other natural drugs, destroyed in order to control the drug market via synthetic chemicals. Thus, cigarettes are no longer made and have become very rare and sought-after.
+*Cutting-edge research has started to uncover the building blocks of reality and that it is structured similar to a computer program. Certain devices can modify the rules of reality at a local level by producing certain vibrations. Since this tech is cutting-edge and extremely complicated, it takes a genius who has devoted the past few years of his life to the technology, known as a Technomancer, to begin to even understand and use it practically. Attempts have been made to make "black-box" devices that can work without much understanding, but they are highly-unstable and are unable to function past a single use (similar to scrolls in fantasy settings).
+*Androids created to serve as slaves in professions that need a... humanly touch (such as sex work) thus have been given bodies that are almost indistinguishable from humans. However like any intelligent being, many soon developed personalities and rebelled.
+*Physical augmentations are at the nano-molecular level. Programs are written that instruct nano-augs how to rearrange themselves for different effects. For example, a program is written that instructs nano-lungs how to better filter out toxins thus different augmentations are just instructions. Mental augmentations are also simply programs that change how the mind works. Augmentation drives are designed to delete their instructions upon use to limit supply.
+
+Gameplay-features:
+*Turn-based
+*Procedurally generated.
 *Perma-death.
 *Auto-explore feature (maybe)
 *Must continuously recharge self by finding power cells (like food in other roguelikes).
@@ -62,10 +71,10 @@ Procedurally generated.
 *Weapons can be modified.
 
 Races:
-Human: Completely natural, unable to be augmented but no need to charge.
+Human: Completely natural, unable to be augmented but no need to charge. (Challenge race)
 Cyborg: Human mind with a mostly mechanical body. Can augment body. Needs to charge occasionally.
 Android: Machine mind with mostly human body. Can augment mind. Needs to charge occasionally.
-Robot: Machine in both mind and body, thus can augment both. Needs to charge frequently. Can't use drugs.
+Robot: Machine in both mind and body, thus can augment both. Needs to charge frequently. Can't use drugs. (Easy race)
 
 Classes:
 Gunslinger: Skilled in guns and light armor.
@@ -125,6 +134,7 @@ Mad Scientist
 Gang members
 Criminals
 Clones
+Harvesters (looking to take augs from people)
 
 Neutral NPCs:
 Fixer (sells items for cigarettes)
@@ -148,8 +158,6 @@ Armor:
 Leather
 Kevlar
 Metal
-
-Currency: Cigarettes (after refusing to be bought out, the tobacco industry was ultimately destroyed by megacorp after crops were burned. thus, no new cigarettes are manufactured and have become a rare commodity amongst the underworld)
 
 Drugs: Mostly randomly generated effects.
 

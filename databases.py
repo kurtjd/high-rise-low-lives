@@ -11,6 +11,7 @@ class Databases:
         self.drugs: dict = {}
         self.power_sources: dict = {}
         self.misc_items: dict = {}
+        self.ammo: dict = {}
 
     def load_from_files(self) -> None:
         # Colors
@@ -47,3 +48,7 @@ class Databases:
         # Misc items
         with open("Data/misc_items.dat") as data_file:
             self.misc_items = json.load(data_file)
+
+        # Misc items
+        with open("Data/ammo.dat") as data_file:
+            self.ammo = json.load(data_file)

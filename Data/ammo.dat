@@ -1,0 +1,9 @@
+{
+	"9MM_FMJ":
+	{
+		"Name": "9mm FMJ",
+		"Description": "Favored by law enforcement and gangsters alike!",
+		"Caliber": "9MM",
+		"Type": "pistol"
+	}
+}
