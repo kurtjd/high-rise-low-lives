@@ -430,7 +430,7 @@ class SelectState(PlayingState):
         self._highlight_entity(None)
 
     def _highlight_entity(self, color: Optional[tuple[int, int, int]] = (255, 255, 255)) -> None:
-        self.entities.get_top_entity_at(self.select_x, self.select_y).bgcolor = color
+        self.entities.get_top_entity_at(self.select_x, self.select_y, True).bgcolor = color
 
     def move_cursor(self, key: Union[input.Key, str]) -> None:
         if (key != input.Key.UP and key != input.Key.DOWN and
@@ -480,7 +480,7 @@ class ExamineState(SelectState):
 
     def handle_input(self, key: Union[input.Key, str]) -> None:
         if key == 'v':
-            self.player.examine_target = self.entities.get_top_entity_at(self.select_x, self.select_y)
+            self.player.examine_target = self.entities.get_top_entity_at(self.select_x, self.select_y, True)
             self.fsm.set_state(self.fsm.desc_screen_state)
 
         self.move_cursor(key)

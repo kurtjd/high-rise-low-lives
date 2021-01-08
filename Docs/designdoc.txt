@@ -1,10 +1,8 @@
 Short-Term ToDo
 ===============
-*Have guns track specific ammo associated with it and not just caliber and allow player to select specific round to load
 *Consider making actions happen before delay instead of after
 *Use dicts or something instead of large if-else
 *Clean up, organize, comment, and docstring current code.
-*If top entity on tile is invisible, get underneath.
 
 
 Mid-Term ToDo
@@ -24,6 +22,7 @@ Mid-Term ToDo
 *Hovering over something in examine mode shows basic info in message log.
 *Allow view of previous messages in log.
 *If message repeated, put a times modifier instead of repeating text.
+*Have guns track specific ammo associated with it and not just caliber and allow player to select specific round to load
 
 
 High-Rise: Low-Lives

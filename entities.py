@@ -31,8 +31,16 @@ class GameEntities:
     def get_all_at(self, x: int, y: int) -> list["Entity"]:
         return [entity_ for entity_ in self.all if entity_.x == x and entity_.y == y]
 
-    def get_top_entity_at(self, x: int, y: int) -> Optional["Entity"]:
-        return self.get_all_at(x, y)[-1]
+    def get_top_entity_at(self, x: int, y: int, ignore_invis: bool = False) -> Optional["Entity"]:
+        if not ignore_invis:
+            return self.get_all_at(x, y)[-1]
+        else:
+            # Get the top-most entity that is visible.
+            all_: list[Entity] = self.get_all_at(x, y)
+            all_.reverse()
+            for entity in all_:
+                if entity.visible:
+                    return entity
 
     def get_actor_at(self, x: int, y: int) -> Optional["Actor"]:
         for actor_ in self.actors:
