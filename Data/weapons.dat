@@ -6,8 +6,8 @@
 		"Damage": 25,
 		"Speed": 1,
 		"Accuracy": 1,
-		"Distance": "melee",
-		"Type": "bladed",
+		"Distance": "MELEE",
+		"Type": "BLADED",
 		"Hands": 1
 	},
 	"BATON":
@@ -17,8 +17,8 @@
     		"Damage": 10,
     		"Speed": 0,
     		"Accuracy": 1,
-		"Distance": "melee",
-		"Type": "blunt",
+		"Distance": "MELEE",
+		"Type": "BLUNT",
 		"Hands": 1
 	},
 	"SAMURAI_SWORD":
@@ -28,8 +28,8 @@
     		"Damage": 30,
     		"Speed": 0,
     		"Accuracy": 0,
-		"Distance": "melee",
-		"Type": "bladed",
+		"Distance": "MELEE",
+		"Type": "BLADED",
 		"Hands": 1
 	},
 	"TEC9":
@@ -39,8 +39,8 @@
     		"Damage": 25,
     		"Speed": 0,
     		"Accuracy": 0,
-		"Distance": "ranged",
-		"Type": "pistol",
+		"Distance": "RANGED",
+		"Type": "PISTOL",
 		"Hands": 1,
 		"Caliber": "9MM",
 		"Mag Capacity": 32

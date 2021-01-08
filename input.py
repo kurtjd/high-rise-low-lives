@@ -17,7 +17,8 @@ class Key(Enum):
     LEFT = auto(),
     DOWN = auto(),
     COMMA = auto(),
-    PERIOD = auto()
+    PERIOD = auto(),
+    MINUS = auto()
 
 
 def poll_input() -> tuple[EventType, Optional[Union[Key, str]]]:
@@ -42,7 +43,8 @@ def poll_input() -> tuple[EventType, Optional[Union[Key, str]]]:
         tcod.event.K_RIGHT: Key.RIGHT,
         tcod.event.K_LEFT: Key.LEFT,
         tcod.event.K_COMMA: Key.COMMA,
-        tcod.event.K_PERIOD: Key.PERIOD
+        tcod.event.K_PERIOD: Key.PERIOD,
+        tcod.event.K_MINUS: Key.MINUS
     }
 
     event_ = next(tcod.event.wait())

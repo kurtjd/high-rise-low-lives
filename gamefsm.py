@@ -245,6 +245,11 @@ class WieldScreenState(BaseState):
         self.game_interface.wield_screen.render(surface, self.player.get_wieldable_items())
 
     def handle_input(self, key: Union[input.Key, str]) -> None:
+        # The minus key unwields.
+        if key == input.Key.MINUS:
+            self.player.attempt_wield(None)
+            self.fsm.reverse_state()
+
         for wieldable in self.player.get_wieldable_items():
             if wieldable[0] == key:
                 self.player.attempt_wield(wieldable[1]["Item"])
@@ -514,6 +519,9 @@ class SelectTargetState(SelectState):
 
         if key == input.Key.ENTER:
             self.player.attempt_atk(self.select_x, self.select_y, True, self.player.bullet_path)
+            self.fsm.reverse_state()
+        elif key == 'f':
+            self.player.attempt_reload()
             self.fsm.reverse_state()
 
     def handle_updates(self) -> None:

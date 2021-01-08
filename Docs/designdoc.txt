@@ -1,12 +1,9 @@
 Short-Term ToDo
 ===============
-*Have guns track ammo in magazine and reload when empty. Allow manual reload with 'ff'.
 *Have guns track specific ammo associated with it and not just caliber and allow player to select specific round to load
-*Decrease from throwable in inventory when thrown.
-*Make base classes for item types
-*Move hard coded colors into color DB
 *Consider making actions happen before delay instead of after
 *Use dicts or something instead of large if-else
+*Clean up, organize, comment, and docstring current code.
 
 
 Mid-Term ToDo

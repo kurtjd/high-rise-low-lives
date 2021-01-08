@@ -60,13 +60,18 @@ def init_player(
 
 
 # Initializes the game interface.Interface.
-def init_interface(colors: dict) -> interface.Interface:
-    game_interface_: interface.Interface = interface.Interface(SCREEN_WIDTH, SCREEN_HEIGHT, MAP_WIDTH, MAP_HEIGHT)
-    game_interface_.message_box.add_msg(
-        "Welcome to the High-Rise, punk!", colors["SYS_MSG"]
+def init_interface(game_db: databases.Databases) -> interface.Interface:
+    game_interface_: interface.Interface = interface.Interface(
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT,
+        MAP_WIDTH,
+        MAP_HEIGHT
     )
     game_interface_.message_box.add_msg(
-        "Will you be the low-life who steals the secrets of the Mega Corp?", colors["SYS_MSG"]
+        "Welcome to the High-Rise, punk!", game_db.colors["SYS_MSG"]
+    )
+    game_interface_.message_box.add_msg(
+        "Will you be the low-life who steals the secrets of the Mega Corp?", game_db.colors["SYS_MSG"]
     )
 
     return game_interface_
@@ -334,7 +339,7 @@ root_console: tcod.Console
 
 entities_: entities.GameEntities = entities.GameEntities(window, root_console)
 
-game_interface: interface.Interface = init_interface(GAME_DATA.colors)
+game_interface: interface.Interface = init_interface(GAME_DATA)
 
 # Generate map (for now read from file, will be randomly generated)
 # Initialize first so that it is drawn on bottom

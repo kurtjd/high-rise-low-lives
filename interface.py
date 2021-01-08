@@ -208,9 +208,24 @@ class Interface:
             )
 
             # Show worn
+            wielding_: str
+            if self.player.wielding is None:
+                wielding_ = "Unarmed"
+            else:
+                wielding_ = self.player.wielding.name
+
+                if self.player.wielding.distance == "RANGED":
+                    rendering.render(
+                        surface,
+                        f"[{self.player.wielding.rounds_in_mag}/{self.player.wielding.mag_capacity}]",
+                        self.x + 17,
+                        self.y + 16,
+                        (255, 255, 255)
+                    )
+
             rendering.render(
                 surface,
-                f"Wielding: {self.player.wielding}\nWearing: {self.player.wearing}",
+                f"Wielding: {wielding_}\nWearing: {self.player.wearing}",
                 self.x + 2,
                 self.y + 16,
                 (255, 255, 255)

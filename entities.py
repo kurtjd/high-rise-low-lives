@@ -14,12 +14,12 @@ class GameEntities:
     def __init__(self, window: Any, surface: Any) -> None:
         self.all: list[Entity] = []
         self.tiles: list[Tile] = []
-        self.actors:  list[Actor] = []
+        self.actors: list[Actor] = []
         self.turrets: list[Turret] = []
-        self.doors:  list[Door] = []
-        self.items:  list[ItemEntity] = []
-        self.terminals:  list[Terminal] = []
-        self.cameras:  list[Camera] = []
+        self.doors: list[Door] = []
+        self.items: list[ItemEntity] = []
+        self.terminals: list[Terminal] = []
+        self.cameras: list[Camera] = []
         self.traps: list[Trap] = []
         self.vents: list[Vent] = []
         self.explosives: list[Explosive] = []
@@ -251,22 +251,22 @@ class Entity:
 
 
 class Actor(Entity):
-
     # Actors can be performing one of these actions:
-    class Actions(Enum):
-        NONE: int = auto(),
-        MOVE: int = auto(),
-        ATK_MELEE: int = auto(),
-        ATK_RANGED: int = auto(),
-        WIELD: int = auto(),
-        OPEN_DOOR: int = auto(),
-        CLOSE_DOOR: int = auto(),
-        REST: int = auto(),
-        PICKUP: int = auto(),
-        HACK: int = auto(),
-        THROW: int = auto(),
-        USE_DRUG: int = auto(),
-        CHARGE: int = auto()
+    class Action(Enum):
+        NONE = auto(),
+        MOVE = auto(),
+        ATK_MELEE = auto(),
+        ATK_RANGED = auto(),
+        WIELD = auto(),
+        OPEN_DOOR = auto(),
+        CLOSE_DOOR = auto(),
+        REST = auto(),
+        PICKUP = auto(),
+        HACK = auto(),
+        THROW = auto(),
+        USE_DRUG = auto(),
+        CHARGE = auto(),
+        RELOAD = auto()
 
     # ~~~ PRIVATE METHODS ~~~
 
@@ -327,6 +327,7 @@ class Actor(Entity):
         self.hack_speed: int = 20
         self.rest_speed: int = 10
         self.throw_speed = 8
+        self.reload_speed = 10
         self.recovery_rate: int = 10
 
         # Inventory/Equipped
@@ -342,7 +343,7 @@ class Actor(Entity):
         self.action_delay: int = -1
         self.action_target_x: int = 0
         self.action_target_y: int = 0
-        self.action: int = Actor.Actions.NONE
+        self.action: Actor.Action = self.Action.NONE
         self.dest_x: int = 0
         self.dest_y: int = 0
         self.atk_target: Optional[Entity] = None
@@ -353,7 +354,7 @@ class Actor(Entity):
 
         # If not the player, set a default action. For now, just rest.
         if not is_player:
-            self._set_action(self.Actions.REST, 1)
+            self._set_action(self.Action.REST, 1)
 
         game_entities_.actors.append(self)
 
@@ -410,7 +411,7 @@ class Actor(Entity):
     # Queues an action and sets the delay and target of the action.
     def _set_action(
             self,
-            action: int,
+            action: Action,
             delay: int,
             target_x: int = 0,
             target_y: int = 0
@@ -422,7 +423,7 @@ class Actor(Entity):
 
     # Called after action is performed. Resets all counters and associated variables.
     def _reset_action(self) -> None:
-        self.action = self.Actions.NONE
+        self.action = self.Action.NONE
         self.action_target_x = 0
         self.action_target_y = 0
         self.action_delay = -1  # -1 represents no action queued
@@ -435,30 +436,32 @@ class Actor(Entity):
 
     # Actually performs the action by calling the appropriate method.
     def _do_action(self) -> None:
-        if self.action == self.Actions.ATK_MELEE:
+        if self.action == self.Action.ATK_MELEE:
             self._attack_melee()
-        elif self.action == self.Actions.ATK_RANGED:
+        elif self.action == self.Action.ATK_RANGED:
             self._attack_ranged()
-        elif self.action == self.Actions.MOVE:
+        elif self.action == self.Action.MOVE:
             self.move()
-        elif self.action == self.Actions.OPEN_DOOR:
+        elif self.action == self.Action.OPEN_DOOR:
             self._open_door()
-        elif self.action == self.Actions.CLOSE_DOOR:
+        elif self.action == self.Action.CLOSE_DOOR:
             self._close_door()
-        elif self.action == self.Actions.REST:
+        elif self.action == self.Action.REST:
             self._rest()
-        elif self.action == self.Actions.PICKUP:
+        elif self.action == self.Action.PICKUP:
             self._pick_up()
-        elif self.action == self.Actions.WIELD:
+        elif self.action == self.Action.WIELD:
             self._wield()
-        elif self.action == self.Actions.HACK:
+        elif self.action == self.Action.HACK:
             self._hack()
-        elif self.action == self.Actions.THROW:
+        elif self.action == self.Action.THROW:
             self._throw()
-        elif self.action == self.Actions.USE_DRUG:
+        elif self.action == self.Action.USE_DRUG:
             self._use_drug()
-        elif self.action == self.Actions.CHARGE:
+        elif self.action == self.Action.CHARGE:
             self._charge()
+        elif self.action == self.Action.RELOAD:
+            self._reload()
 
     # Attempts to open a door.
     def _open_door(self) -> None:
@@ -497,7 +500,11 @@ class Actor(Entity):
 
     # Performs a ranged attack
     def _attack_ranged(self) -> None:
+        self.wielding.rounds_in_mag -= 1
+
         # Check each point within the bullet path for something that can be attacked.
+        # If the actor is adjacent to cover and the bullet passes through the cover, subtract its cover percent from
+        # the chane to hit.
         prev_entity_cover: int = 0
         for point in self.bullet_path:
             entity_at_point: Entity = self.game_entities.get_top_entity_at(point[0], point[1])
@@ -507,18 +514,17 @@ class Actor(Entity):
             else:
                 prev_entity_cover = entity_at_point.cover_percent
 
-            self.render_sleep([(point[0], point[1])], ')', (255, 0, 0), 0.01)
+            # Want to un-hardcode the character and animation delay later.
+            self.render_sleep([(point[0], point[1])], ')', self.game_data.colors["RED"], 0.01)
 
         self.game_interface.message_box.add_msg(
             f"{self.name} shoots at nothing.", self.game_data.colors["ERROR_MSG"]
         )
 
-        self._dec_ammo_count(self.wielding.caliber)
-
     def _throw(self) -> None:
         # Draw the throwable as it goes through the air
         for point in self.bullet_path:
-            self.render_sleep([(point[0], point[1])], ')', (255, 0, 0), 0.01)
+            self.render_sleep([(point[0], point[1])], ')', self.game_data.colors["RED"], 0.01)
 
         x: int
         y: int
@@ -559,6 +565,25 @@ class Actor(Entity):
                 self.game_interface
             )
 
+    def _reload(self) -> None:
+        mag_capacity: int = self.wielding.mag_capacity
+        ammo_count: int = self.get_ammo_amount(self.wielding.caliber)
+
+        # If the actor has more ammo in their inventory than size of mag, fill it up.
+        # If not, put the actor's last ammo into the mag.
+        if ammo_count >= mag_capacity:
+            self.wielding.rounds_in_mag = mag_capacity
+            self._dec_ammo_count(self.wielding.caliber, mag_capacity)
+        elif ammo_count > 0:
+            self.wielding.rounds_in_mag = ammo_count
+            self._dec_ammo_count(self.wielding.caliber, ammo_count)
+        else:
+            return
+
+        self.game_interface.message_box.add_msg(
+            f"{self.name} reloads his {self.wielding.name}.", self.game_data.colors["SUCCESS_MSG"]
+        )
+
     # Update what the player is wielding and change stats to reflect that.
     def _wield(self) -> None:
         if self.action_target is None:
@@ -573,6 +598,9 @@ class Actor(Entity):
             self.game_interface.message_box.add_msg(
                 f"{self.name} wields a {self.action_target.name}.", self.game_data.colors["SUCCESS_MSG"]
             )
+
+            if self.wielding.distance == "RANGED":
+                self._reload()
 
     def _use_drug(self):
         drug: items.Drug = self.inventory[self.action_target]["Item"]
@@ -693,11 +721,11 @@ class Actor(Entity):
         self.x = self.dest_x
         self.y = self.dest_y
 
-    def get_wieldable_items(self) -> [items.Item]:
-        return [item_ for item_ in self.inventory.items() if item_[1]["Item"].wieldable]
+    def get_wieldable_items(self) -> [items.Wieldable]:
+        return [item_ for item_ in self.inventory.items() if isinstance(item_[1]["Item"], items.Wieldable)]
 
-    def get_throwable_items(self) -> [items.Item]:
-        return [item_ for item_ in self.inventory.items() if item_[1]["Item"].throwable]
+    def get_throwable_items(self) -> [items.Throwable]:
+        return [item_ for item_ in self.inventory.items() if isinstance(item_[1]["Item"], items.Throwable)]
 
     def get_drug_items(self) -> [items.Drug]:
         return [item_ for item_ in self.inventory.items() if isinstance(item_[1]["Item"], items.Drug)]
@@ -722,17 +750,18 @@ class Actor(Entity):
             bullet_path: Optional[list[tuple[int, int]]] = None
     ) -> None:
         if not ranged:
-            self._set_action(self.Actions.ATK_MELEE, self.atk_speed, x, y)
+            self._set_action(self.Action.ATK_MELEE, self.atk_speed, x, y)
         else:
-            if self.wielding is not None and self.wielding.distance == "ranged":
-                # Is the player out of ammo?
-                if self.get_ammo_amount(self.wielding.caliber) > 0:
+            if self.wielding is not None and self.wielding.distance == "RANGED":
+                # Does the weapon have rounds in the mag?
+                if self.wielding.rounds_in_mag > 0:
                     self.bullet_path = bullet_path
-                    self._set_action(self.Actions.ATK_RANGED, self.atk_speed, x, y)
-                elif self.is_player:
-                    self.game_interface.message_box.add_msg(
-                        f"You are out of ammo!", self.game_data.colors["ERROR_MSG"]
-                    )
+                    self._set_action(self.Action.ATK_RANGED, self.atk_speed, x, y)
+                else:
+                    if self.is_player:
+                        self.game_interface.message_box.add_msg(
+                            f"You are out of ammo! Try reloading.", self.game_data.colors["ERROR_MSG"]
+                        )
             elif self.is_player:
                 # Is the player not wielding a ranged weapon?
                 self.game_interface.message_box.add_msg(
@@ -757,10 +786,10 @@ class Actor(Entity):
                     self.attempt_atk(new_x, new_y)
                     return True
                 elif isinstance(dest_entity, Door) and not dest_entity.opened:
-                    self._set_action(self.Actions.OPEN_DOOR, self.gen_speed, new_x, new_y)
+                    self._set_action(self.Action.OPEN_DOOR, self.gen_speed, new_x, new_y)
                     return True
                 elif isinstance(dest_entity, Terminal):
-                    self._set_action(self.Actions.HACK, self.hack_speed, new_x, new_y)
+                    self._set_action(self.Action.HACK, self.hack_speed, new_x, new_y)
                     return True
                 elif isinstance(dest_entity, Vent) and not self.is_player:
                     return False  # Don't let NPCs follow player into vents
@@ -770,19 +799,19 @@ class Actor(Entity):
                     return False
 
         # If destination is not blocked and is not a living Actor, move to it
-        self._set_action(self.Actions.MOVE, self.move_speed)
+        self._set_action(self.Action.MOVE, self.move_speed)
         return True
 
     def attempt_throw(self, x: int, y: int, item: items.Item, throw_path: Optional[list[tuple[int, int]]] = None):
         self.bullet_path = throw_path
         self.throwing = item
-        self._set_action(self.Actions.THROW, self.throw_speed, x, y)
+        self._set_action(self.Action.THROW, self.throw_speed, x, y)
 
     # Attempts to pick an item up off the floor where the Actor is standing.
     def attempt_pickup(self) -> None:
         # Only pick up if there's something on the floor.
         if self.game_entities.get_items_at(self.x, self.y):
-            self._set_action(self.Actions.PICKUP, self.gen_speed, self.x, self.y)
+            self._set_action(self.Action.PICKUP, self.gen_speed, self.x, self.y)
         elif self.is_player:
             self.game_interface.message_box.add_msg(
                 "There's nothing here to pickup.", self.game_data.colors["ERROR_MSG"]
@@ -800,15 +829,34 @@ class Actor(Entity):
 
         # Finally set the action and send a message.
         self.action_target = new_weapon
-        self._set_action(self.Actions.WIELD, self.wield_speed)
+        self._set_action(self.Action.WIELD, self.wield_speed)
 
-    def attempt_use_drug(self, drug_id: str):
+    def attempt_use_drug(self, drug_id: str) -> None:
         self.action_target = drug_id
-        self._set_action(self.Actions.USE_DRUG, self.gen_speed)
+        self._set_action(self.Action.USE_DRUG, self.gen_speed)
 
-    def attempt_charge(self, powersrc_id: str):
+    def attempt_charge(self, powersrc_id: str) -> None:
         self.action_target = powersrc_id
-        self._set_action(self.Actions.CHARGE, self.gen_speed)
+        self._set_action(self.Action.CHARGE, self.gen_speed)
+
+    def attempt_reload(self) -> None:
+        if not isinstance(self.wielding, items.Weapon) or self.wielding.distance != "RANGED":
+            self.game_interface.message_box.add_msg(
+                "You can't reload your current weapon.",
+                self.game_data.colors["ERROR_MSG"]
+            )
+        elif self.wielding.rounds_in_mag == self.wielding.mag_capacity:
+            self.game_interface.message_box.add_msg(
+                "Your magazine is already full.",
+                self.game_data.colors["ERROR_MSG"]
+            )
+        elif not self.get_ammo_amount(self.wielding.caliber):
+            self.game_interface.message_box.add_msg(
+                "You have no more ammo to reload with.",
+                self.game_data.colors["ERROR_MSG"]
+            )
+        else:
+            self._set_action(self.Action.RELOAD, self.reload_speed)
 
     # Checks for open doors around the Actor and closes them if they exist.
     def attempt_close_door(self) -> None:
@@ -817,7 +865,7 @@ class Actor(Entity):
                 if x != 0 or y != 0:
                     target_door: Door = self.game_entities.get_door_at(self.x + x, self.y + y)
                     if target_door is not None and target_door.opened:
-                        self._set_action(self.Actions.CLOSE_DOOR, self.gen_speed, target_door.x, target_door.y)
+                        self._set_action(self.Action.CLOSE_DOOR, self.gen_speed, target_door.x, target_door.y)
                         return
 
         if self.is_player:
@@ -827,7 +875,7 @@ class Actor(Entity):
 
     # Actor rests to recover HP and other stuff
     def attempt_rest(self) -> None:
-        self._set_action(self.Actions.REST, self.rest_speed)
+        self._set_action(self.Action.REST, self.rest_speed)
 
     # Called every tick of game time.
     def update(self, game_time: int) -> None:
@@ -849,7 +897,6 @@ class Actor(Entity):
                 self._reset_action()
 
 
-# This is a small class since the player mostly shares characteristics with other actors except a few things.
 class Player(Actor):
     def __init__(
             self,
@@ -918,7 +965,7 @@ class Player(Actor):
         if self.in_vents and vent_to is None and vent_on is not None and not vent_on.entrance:
             return False
 
-        if not self.in_vents and\
+        if not self.in_vents and \
                 ((vent_to is not None and not vent_to.entrance) and (vent_on is None or not vent_on.entrance)):
             return False
 
@@ -1008,7 +1055,6 @@ class ItemEntity(Entity):
         super().remove()
 
 
-# Represents static map tiles like floors and walls.
 class Tile(Entity):
     def __init__(
             self,
@@ -1127,10 +1173,11 @@ class Door(Entity):
         self.cover_percent = self.game_data.tiles["DOOR_CLOSED"]["Cover Percent"]
 
 
-# Terminals can be hacked to do things like:
-# open doors, turn off security cameras, disable turrets and traps, download programs, etc
-# If failed to hack, can do nasty things like sound an alarm, explode, give you a virus, etc
 class Terminal(Entity):
+    """ Terminals can be hacked to do things like:
+         open doors, turn off security cameras, disable turrets and traps, download programs, etc
+         If failed to hack, can do nasty things like sound an alarm, explode, give you a virus, etc """
+
     class SuccessResult(Enum):
         DISABLE_CAMS: int = auto(),
         DISABLE_TURRETS: int = auto(),
@@ -1340,7 +1387,7 @@ class Explosive(Entity):
                     actor.receive_hit(self, round(self.damage / (i + 1)), 100)
                     actors_hit.append(actor)
 
-            self.render_sleep(blast_zone, '*', (255, 0, 0), 0.05)
+            self.render_sleep(blast_zone, '*', self.game_data.colors["RED"], 0.05)
 
         self.remove()
 

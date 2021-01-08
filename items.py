@@ -10,19 +10,33 @@ class Item:
         self,
         name: str,
         desc: str,
-        throwable: bool = False,
-        wieldable: bool = False
     ) -> None:
         self.name: str = name
         self.desc: str = desc
-        self.throwable: bool = throwable
-        self.wieldable: bool = wieldable
 
     def on_pick_up(self, src_actor: "entities.Actor", amount: int = 1):
         src_actor.add_inventory(self, amount)
 
 
-class Weapon(Item):
+class Wieldable(Item):
+    def __init__(
+        self,
+        name: str,
+        desc: str
+    ) -> None:
+        super().__init__(name, desc)
+
+
+class Throwable(Item):
+    def __init__(
+        self,
+        name: str,
+        desc: str
+    ) -> None:
+        super().__init__(name, desc)
+
+
+class Weapon(Wieldable):
     # ~~~ STATIC METHODS ~~~
     def __init__(
             self,
@@ -37,7 +51,7 @@ class Weapon(Item):
             caliber: Optional[str] = None,
             mag_capacity: Optional[int] = None
     ) -> None:
-        super().__init__(name, desc, False, True)
+        super().__init__(name, desc)
         self.dmg: int = dmg
         self.speed: int = speed
         self.accuracy: int = accuracy
@@ -51,7 +65,7 @@ class Weapon(Item):
         self.rounds_in_mag: int = 0
 
 
-class Grenade(Item):
+class Grenade(Throwable):
     def __init__(
         self,
         name: str,
@@ -60,7 +74,7 @@ class Grenade(Item):
         blast_radius: int,
         fuse: int
     ) -> None:
-        super().__init__(name, desc, True, False)
+        super().__init__(name, desc)
         self.damage = damage
         self.blast_radius = blast_radius
         self.fuse = fuse
