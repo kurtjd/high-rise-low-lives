@@ -1,6 +1,5 @@
 Short-Term ToDo
 ===============
-*Consider making actions happen before delay instead of after
 *Use dicts or something instead of large if-else
 *Clean up, organize, comment, and docstring current code.
 
@@ -23,6 +22,7 @@ Mid-Term ToDo
 *Allow view of previous messages in log.
 *If message repeated, put a times modifier instead of repeating text.
 *Have guns track specific ammo associated with it and not just caliber and allow player to select specific round to load
+*Make security cameras destroyable
 
 
 High-Rise: Low-Lives

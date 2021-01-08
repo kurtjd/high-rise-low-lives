@@ -348,7 +348,7 @@ class Actor(Entity):
 
         # These properties are used to track actions.
         self.action_target: Any = None  # Used when the target isn't an x/y
-        self.action_delay: int = -1
+        self.action_cooldown: int = -1
         self.action_target_x: int = 0
         self.action_target_y: int = 0
         self.action: Actor.Action = self.Action.NONE
@@ -362,7 +362,7 @@ class Actor(Entity):
 
         # If not the player, set a default action. For now, just rest.
         if not is_player:
-            self._set_action(self.Action.REST, 1)
+            self._do_action(self.Action.REST, 1)
 
         game_entities_.actors.append(self)
 
@@ -416,25 +416,13 @@ class Actor(Entity):
         if self.health > 100:
             self.health = 100
 
-    # Queues an action and sets the delay and target of the action.
-    def _set_action(
-            self,
-            action: Action,
-            delay: int,
-            target_x: int = 0,
-            target_y: int = 0
-    ) -> None:
-        self.action = action
-        self.action_delay = delay
-        self.action_target_x = target_x
-        self.action_target_y = target_y
-
-    # Called after action is performed. Resets all counters and associated variables.
+    # Called after action cooldown has passed.
+    # Resets all counters and associated variables allowing for new action to be selected.
     def _reset_action(self) -> None:
         self.action = self.Action.NONE
         self.action_target_x = 0
         self.action_target_y = 0
-        self.action_delay = -1  # -1 represents no action queued
+        self.action_cooldown = -1  # -1 represents no action queued
         self.dest_x = 0
         self.dest_y = 0
 
@@ -443,7 +431,12 @@ class Actor(Entity):
             self._think()
 
     # Actually performs the action by calling the appropriate method.
-    def _do_action(self) -> None:
+    def _do_action(self, action: Action, cooldown: int, target_x: int = 0, target_y: int = 0) -> None:
+        self.action = action
+        self.action_cooldown = cooldown
+        self.action_target_x = target_x
+        self.action_target_y = target_y
+
         if self.action == self.Action.ATK_MELEE:
             self._attack_melee()
         elif self.action == self.Action.ATK_RANGED:
@@ -758,13 +751,13 @@ class Actor(Entity):
             bullet_path: Optional[list[tuple[int, int]]] = None
     ) -> None:
         if not ranged:
-            self._set_action(self.Action.ATK_MELEE, self.atk_speed, x, y)
+            self._do_action(self.Action.ATK_MELEE, self.atk_speed, x, y)
         else:
             if self.wielding is not None and self.wielding.distance == "RANGED":
                 # Does the weapon have rounds in the mag?
                 if self.wielding.rounds_in_mag > 0:
                     self.bullet_path = bullet_path
-                    self._set_action(self.Action.ATK_RANGED, self.atk_speed, x, y)
+                    self._do_action(self.Action.ATK_RANGED, self.atk_speed, x, y)
                 else:
                     if self.is_player:
                         self.game_interface.message_box.add_msg(
@@ -794,10 +787,10 @@ class Actor(Entity):
                     self.attempt_atk(new_x, new_y)
                     return True
                 elif isinstance(dest_entity, Door) and not dest_entity.opened:
-                    self._set_action(self.Action.OPEN_DOOR, self.gen_speed, new_x, new_y)
+                    self._do_action(self.Action.OPEN_DOOR, self.gen_speed, new_x, new_y)
                     return True
                 elif isinstance(dest_entity, Terminal):
-                    self._set_action(self.Action.HACK, self.hack_speed, new_x, new_y)
+                    self._do_action(self.Action.HACK, self.hack_speed, new_x, new_y)
                     return True
                 elif isinstance(dest_entity, Vent) and not self.is_player:
                     return False  # Don't let NPCs follow player into vents
@@ -807,19 +800,19 @@ class Actor(Entity):
                     return False
 
         # If destination is not blocked and is not a living Actor, move to it
-        self._set_action(self.Action.MOVE, self.move_speed)
+        self._do_action(self.Action.MOVE, self.move_speed)
         return True
 
     def attempt_throw(self, x: int, y: int, item: items.Item, throw_path: Optional[list[tuple[int, int]]] = None):
         self.bullet_path = throw_path
         self.throwing = item
-        self._set_action(self.Action.THROW, self.throw_speed, x, y)
+        self._do_action(self.Action.THROW, self.throw_speed, x, y)
 
     # Attempts to pick an item up off the floor where the Actor is standing.
     def attempt_pickup(self) -> None:
         # Only pick up if there's something on the floor.
         if self.game_entities.get_items_at(self.x, self.y):
-            self._set_action(self.Action.PICKUP, self.gen_speed, self.x, self.y)
+            self._do_action(self.Action.PICKUP, self.gen_speed, self.x, self.y)
         elif self.is_player:
             self.game_interface.message_box.add_msg(
                 "There's nothing here to pickup.", self.game_data.colors["ERROR_MSG"]
@@ -837,15 +830,15 @@ class Actor(Entity):
 
         # Finally set the action and send a message.
         self.action_target = new_weapon
-        self._set_action(self.Action.WIELD, self.wield_speed)
+        self._do_action(self.Action.WIELD, self.wield_speed)
 
     def attempt_use_drug(self, drug_id: str) -> None:
         self.action_target = drug_id
-        self._set_action(self.Action.USE_DRUG, self.gen_speed)
+        self._do_action(self.Action.USE_DRUG, self.gen_speed)
 
     def attempt_charge(self, powersrc_id: str) -> None:
         self.action_target = powersrc_id
-        self._set_action(self.Action.CHARGE, self.gen_speed)
+        self._do_action(self.Action.CHARGE, self.gen_speed)
 
     def attempt_reload(self) -> None:
         if not isinstance(self.wielding, items.Weapon) or self.wielding.distance != "RANGED":
@@ -864,7 +857,7 @@ class Actor(Entity):
                 self.game_data.colors["ERROR_MSG"]
             )
         else:
-            self._set_action(self.Action.RELOAD, self.reload_speed)
+            self._do_action(self.Action.RELOAD, self.reload_speed)
 
     # Checks for open doors around the Actor and closes them if they exist.
     def attempt_close_door(self) -> None:
@@ -873,7 +866,7 @@ class Actor(Entity):
                 if x != 0 or y != 0:
                     target_door: Door = self.game_entities.get_door_at(self.x + x, self.y + y)
                     if target_door is not None and target_door.opened:
-                        self._set_action(self.Action.CLOSE_DOOR, self.gen_speed, target_door.x, target_door.y)
+                        self._do_action(self.Action.CLOSE_DOOR, self.gen_speed, target_door.x, target_door.y)
                         return
 
         if self.is_player:
@@ -883,7 +876,7 @@ class Actor(Entity):
 
     # Actor rests to recover HP and other stuff
     def attempt_rest(self) -> None:
-        self._set_action(self.Action.REST, self.rest_speed)
+        self._do_action(self.Action.REST, self.rest_speed)
 
     # Called every tick of game time.
     def update(self, game_time: int) -> None:
@@ -895,13 +888,12 @@ class Actor(Entity):
         if game_time > 0 and (game_time % self.recovery_rate) == 0:
             self._recover()
 
-        # Only delay action if the actor has an action queued
-        if self.action_delay > 0:
-            self.action_delay -= 1
+        # If actor is still in cooldown from previos action, decrease cooldown.
+        if self.action_cooldown > 0:
+            self.action_cooldown -= 1
 
-            # Perform the action and think of a new one.
-            if self.action_delay == 0:
-                self._do_action()
+            # Reset action counters allowing for new action to be selected.
+            if self.action_cooldown == 0:
                 self._reset_action()
 
 

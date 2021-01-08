@@ -217,7 +217,7 @@ class PlayingState(BaseState):
 
     def handle_updates(self) -> None:
         # Updates the game every tick of time in between player actions
-        while self.player.action_delay >= 0:
+        while self.player.action_cooldown >= 0:
             self.game_time += 1
             self.entities.update_all(self.game_time)
 
@@ -543,5 +543,5 @@ class SelectThrowState(SelectTargetState):
         self.update_bullet_path(False)
 
         if key == input.Key.ENTER:
-            self.player.attempt_throw(self.select_x, self.select_y, self.player.item_selected, self.player.bullet_path)
             self.fsm.set_state(self.fsm.playing_state)
+            self.player.attempt_throw(self.select_x, self.select_y, self.player.item_selected, self.player.bullet_path)
