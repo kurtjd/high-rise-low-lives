@@ -1,19 +1,67 @@
-from typing import Any, Optional
+from enum import Enum, auto
+from typing import Optional, Union
 import tcod
 
 
-def poll_input() -> Optional[tuple[Any, Any]]:
-    event_type: str
-    event_key: Optional[int] = None
+class EventType(Enum):
+    KEYDOWN = auto(),
+    QUIT = auto()
+
+
+class Key(Enum):
+    CTRL_C = auto(),
+    ENTER = auto(),
+    ESCAPE = auto(),
+    UP = auto(),
+    RIGHT = auto(),
+    LEFT = auto(),
+    DOWN = auto(),
+    COMMA = auto(),
+    PERIOD = auto()
+
+
+def poll_input() -> tuple[EventType, Optional[Union[Key, str]]]:
+    """Generic input poller that returns either a character if keys a-z were pressed
+    or a corresponding Key if anything else was pressed for the FSM to hand."""
+
+    event_type: EventType
+    event_key: Optional[Union[Key, str]] = None
 
     # if TCOD:
+    # Convert tcod specifics to generics
+    events: dict = {
+        "KEYDOWN": EventType.KEYDOWN,
+        "QUIT": EventType.QUIT
+    }
+
+    keys: dict = {
+        tcod.event.K_RETURN: Key.ENTER,
+        tcod.event.K_ESCAPE: Key.ESCAPE,
+        tcod.event.K_UP: Key.UP,
+        tcod.event.K_DOWN: Key.DOWN,
+        tcod.event.K_RIGHT: Key.RIGHT,
+        tcod.event.K_LEFT: Key.LEFT,
+        tcod.event.K_COMMA: Key.COMMA,
+        tcod.event.K_PERIOD: Key.PERIOD
+    }
+
     event_ = next(tcod.event.wait())
-    if not event_:
-        return None, None
-    event_type = event_.type
-    if event_type == "KEYDOWN":
-        event_key = event_.sym
-        if event_.mod & tcod.event.KMOD_SHIFT:
-            event_key = ord(chr(event_.sym).upper())
+
+    event_type = events.get(event_.type)
+    if event_type == EventType.KEYDOWN:
+        event_key = keys.get(event_.sym)
+
+        # If key is a-z return the actual character instead of a Key.
+        if tcod.event.K_a <= event_.sym <= tcod.event.K_z:
+            event_key = chr(int(event_.sym))
+
+            # If shift was held while pressing letter key, then capitalize it.
+            if event_.mod & tcod.event.KMOD_SHIFT:
+                event_key = event_key.upper()
+
+            # Check for ctrl key modifiers.
+            elif event_.mod & tcod.event.KMOD_CTRL:
+                if event_.sym == tcod.event.K_c:
+                    event_key = Key.CTRL_C
 
     return event_type, event_key

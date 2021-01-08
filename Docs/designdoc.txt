@@ -1,12 +1,12 @@
 Short-Term ToDo
 ===============
-*Have guns track ammo in magazine and reload when empty.
+*Have guns track ammo in magazine and reload when empty. Allow manual reload with 'ff'.
 *Have guns track specific ammo associated with it and not just caliber and allow player to select specific round to load
 *Decrease from throwable in inventory when thrown.
 *Make base classes for item types
-*Factor out tcod-specific input
 *Move hard coded colors into color DB
 *Consider making actions happen before delay instead of after
+*Use dicts or something instead of large if-else
 
 
 Mid-Term ToDo
@@ -73,6 +73,7 @@ Gameplay-features:
 *Different floor themes like residential area full of gang members and other criminals.
 *Can dual-wield weapons
 *Weapons can be modified.
+*Genders and change text to use different pronouns.
 
 Races:
 Human: Completely natural, unable to be augmented but no need to charge. (Challenge race)
@@ -119,6 +120,12 @@ Health
 Charge
 Armor Class
 Technomancy device charge
+
+Leveling System
+===============
+
+Combat System
+=============
 
 Enemies (Called "drones" since they all serve the megacorp):
 Rent-a-cop

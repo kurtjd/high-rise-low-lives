@@ -2,12 +2,12 @@ import math
 import time
 from enum import Enum, auto
 from typing import Optional, Callable, Any
-import tcod
 import rendering
 import databases
 import interface
 import items
 import ai
+import bresenham
 
 
 class GameEntities:
@@ -200,7 +200,7 @@ class Entity:
             end_y = y2 + ((y2 - self.y) * 20)
 
         # Disclude the entity from the LOS.
-        los: list[tuple[int, int]] = tcod.los.bresenham((self.x, self.y), (end_x, end_y)).tolist()[1:]
+        los: list[tuple[int, int]] = bresenham.bresenham((self.x, self.y), (end_x, end_y))[1:]
 
         # Check each point in the LOS if it's 100% cover (basically meaning it's a wall). If so, stop the LOS there.
         final_los: list[tuple[int, int]] = []
@@ -649,9 +649,13 @@ class Actor(Entity):
                         f"{src_entity.name} shoots {self.name} with his"
                         f" {src_entity.wielding.name} for {atk_dmg} damage!"
                     )
-                else:
+                elif src_entity.wielding is not None:
                     hit_msg = (
                         f"{src_entity.name} hits {self.name} with his {src_entity.wielding.name} for {atk_dmg} damage!"
+                    )
+                else:
+                    hit_msg = (
+                        f"{src_entity.name} pummels {self.name} with his fists for {atk_dmg} damage!"
                     )
             elif isinstance(src_entity, Explosive):
                 hit_msg = f"{self.name} is caught in an explosion and receives {atk_dmg} damage!"
@@ -729,7 +733,7 @@ class Actor(Entity):
                     self.game_interface.message_box.add_msg(
                         f"You are out of ammo!", self.game_data.colors["ERROR_MSG"]
                     )
-            else:
+            elif self.is_player:
                 # Is the player not wielding a ranged weapon?
                 self.game_interface.message_box.add_msg(
                     f"You are not wielding a ranged weapon.", self.game_data.colors["ERROR_MSG"]

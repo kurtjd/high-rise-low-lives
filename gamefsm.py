@@ -1,24 +1,8 @@
-from typing import Union, Optional, Any
-import tcod
+from typing import Optional, Any, Union
 import rendering
+import input
 import entities
 import interface
-
-
-def get_letter_key(event: tcod.event) -> str:
-    key: Union[int, str] = event.sym
-
-    # If not a letter key, then do nothing.
-    if tcod.event.K_a <= key <= tcod.event.K_z:
-        key = chr(key)
-
-        # If the shift key was held, convert to upper-case.
-        if event.mod & tcod.event.KMOD_SHIFT:
-            key = key.upper()
-
-        return key
-    else:
-        return ''
 
 
 # A finite state machine used to manage state of game.
@@ -128,17 +112,18 @@ class GameFSM:
         rendering.present_surface(window, surface)
 
     def handle_input(self) -> None:
-        for event in tcod.event.wait():
-            if event.type == "QUIT":
+        while 1:
+            (event_type, event_key) = input.poll_input()
+
+            if event_type == input.EventType.QUIT:
                 raise SystemExit()
-            elif event.type == "KEYDOWN":
-                key: int = event.sym
+            elif event_type == input.EventType.KEYDOWN:
+                self.state.handle_input(event_key)
 
-                self.state.handle_input(event)
-
-                # General input
-                if key == tcod.event.K_ESCAPE:
+                if event_key == input.Key.ESCAPE:
                     self.reverse_state()
+
+                break
 
     def handle_updates(self) -> None:
         self.state.handle_updates()
@@ -167,7 +152,7 @@ class BaseState:
     def handle_rendering(self, surface: Any) -> None:
         pass
 
-    def handle_input(self, event: tcod.event) -> None:
+    def handle_input(self, key: Union[input.Key, str]) -> None:
         pass
 
     def handle_updates(self) -> None:
@@ -198,38 +183,36 @@ class PlayingState(BaseState):
         self.game_interface.message_box.render(surface)
         self.entities.render_all(surface)
 
-    def handle_input(self, event: tcod.event) -> None:
-        key: int = event.sym
-
-        if key == tcod.event.K_UP:
+    def handle_input(self, key: Union[input.Key, str]) -> None:
+        if key == input.Key.UP:
             self.player.attempt_move(0, -1)
-        elif key == tcod.event.K_DOWN:
+        elif key == input.Key.DOWN:
             self.player.attempt_move(0, 1)
-        elif key == tcod.event.K_LEFT:
+        elif key == input.Key.LEFT:
             self.player.attempt_move(-1, 0)
-        elif key == tcod.event.K_RIGHT:
+        elif key == input.Key.RIGHT:
             self.player.attempt_move(1, 0)
-        elif key == tcod.event.K_PERIOD:
+        elif key == input.Key.PERIOD:
             self.player.attempt_rest()
-        elif key == tcod.event.K_SEMICOLON:
+        elif key == input.Key.COMMA:
             self.player.attempt_pickup()
-        elif (event.mod & tcod.event.KMOD_CTRL) and key == tcod.event.K_c:
+        elif key == input.Key.CTRL_C:
             self.player.attempt_close_door()
-        elif key == tcod.event.K_w:
+        elif key == 'w':
             self.fsm.set_state(self.fsm.wield_screen_state)
-        elif key == tcod.event.K_i:
+        elif key == 'i':
             self.fsm.set_state(self.fsm.inventory_screen_state)
-        elif key == tcod.event.K_x:
+        elif key == 'x':
             self.fsm.set_state(self.fsm.examine_state)
-        elif key == tcod.event.K_f:
+        elif key == 'f':
             self.fsm.set_state(self.fsm.select_target_state)
-        elif key == tcod.event.K_t:
+        elif key == 't':
             self.fsm.set_state(self.fsm.throw_screen_state)
-        elif key == tcod.event.K_q:
+        elif key == 'q':
             self.fsm.set_state(self.fsm.drug_screen_state)
-        elif key == tcod.event.K_c:
+        elif key == 'c':
             self.fsm.set_state(self.fsm.charge_screen_state)
-        elif key == tcod.event.K_ESCAPE:
+        elif key == input.Key.ESCAPE:
             raise SystemExit()
 
     def handle_updates(self) -> None:
@@ -261,15 +244,12 @@ class WieldScreenState(BaseState):
     def handle_rendering(self, surface: Any) -> None:
         self.game_interface.wield_screen.render(surface, self.player.get_wieldable_items())
 
-    def handle_input(self, event: tcod.event) -> None:
-        key_char: str = get_letter_key(event)
-
-        if key_char:
-            for wieldable in self.player.get_wieldable_items():
-                if wieldable[0] == key_char:
-                    self.player.attempt_wield(wieldable[1]["Item"])
-                    self.fsm.reverse_state()
-                    return
+    def handle_input(self, key: Union[input.Key, str]) -> None:
+        for wieldable in self.player.get_wieldable_items():
+            if wieldable[0] == key:
+                self.player.attempt_wield(wieldable[1]["Item"])
+                self.fsm.reverse_state()
+                return
 
     def handle_updates(self) -> None:
         pass
@@ -294,15 +274,12 @@ class InventoryScreenState(BaseState):
     def handle_rendering(self, surface: Any) -> None:
         self.game_interface.inventory_screen.render(surface, self.player)
 
-    def handle_input(self, event: tcod.event) -> None:
-        key_char: str = get_letter_key(event)
-
-        if key_char:
-            for item in self.player.inventory.items():
-                if item[0] == key_char:
-                    self.player.examine_target = item[1]["Item"]
-                    self.fsm.set_state(self.fsm.desc_screen_state)
-                    return
+    def handle_input(self, key: Union[input.Key, str]) -> None:
+        for item in self.player.inventory.items():
+            if item[0] == key:
+                self.player.examine_target = item[1]["Item"]
+                self.fsm.set_state(self.fsm.desc_screen_state)
+                return
 
     def handle_updates(self) -> None:
         pass
@@ -327,15 +304,12 @@ class ThrowScreenState(BaseState):
     def handle_rendering(self, surface: Any) -> None:
         self.game_interface.throw_screen.render(surface, self.player.get_throwable_items())
 
-    def handle_input(self, event: tcod.event) -> None:
-        key_char: str = get_letter_key(event)
-
-        if key_char:
-            for throwable in self.player.get_throwable_items():
-                if throwable[0] == key_char:
-                    self.player.item_selected = throwable[1]["Item"]
-                    self.fsm.set_state(self.fsm.select_throw_state)
-                    return
+    def handle_input(self, key: Union[input.Key, str]) -> None:
+        for throwable in self.player.get_throwable_items():
+            if throwable[0] == key:
+                self.player.item_selected = throwable[1]["Item"]
+                self.fsm.set_state(self.fsm.select_throw_state)
+                return
 
     def handle_updates(self) -> None:
         pass
@@ -360,7 +334,7 @@ class DescScreenState(BaseState):
     def handle_rendering(self, surface: Any) -> None:
         self.game_interface.description_screen.render(surface, self.player.examine_target)
 
-    def handle_input(self, event: tcod.event) -> None:
+    def handle_input(self, key: Union[input.Key, str]) -> None:
         pass
 
     def handle_updates(self) -> None:
@@ -386,15 +360,12 @@ class DrugScreenState(BaseState):
     def handle_rendering(self, surface: Any) -> None:
         self.game_interface.drug_screen.render(surface, self.player.get_drug_items())
 
-    def handle_input(self, event: tcod.event) -> None:
-        key: str = get_letter_key(event)
-
-        if key:
-            for drug in self.player.get_drug_items():
-                if drug[0] == key:
-                    self.player.attempt_use_drug(drug[0])
-                    self.fsm.set_state(self.fsm.playing_state)
-                    return
+    def handle_input(self, key: Union[input.Key, str]) -> None:
+        for drug in self.player.get_drug_items():
+            if drug[0] == key:
+                self.player.attempt_use_drug(drug[0])
+                self.fsm.set_state(self.fsm.playing_state)
+                return
 
     def handle_updates(self) -> None:
         pass
@@ -419,15 +390,12 @@ class ChargeScreenState(BaseState):
     def handle_rendering(self, surface: Any) -> None:
         self.game_interface.charge_screen.render(surface, self.player.get_power_sources())
 
-    def handle_input(self, event: tcod.event) -> None:
-        key_char: str = get_letter_key(event)
-
-        if key_char:
-            for powersrc in self.player.get_power_sources():
-                if powersrc[0] == key_char:
-                    self.player.attempt_charge(powersrc[0])
-                    self.fsm.set_state(self.fsm.playing_state)
-                    return
+    def handle_input(self, key: Union[input.Key, str]) -> None:
+        for powersrc in self.player.get_power_sources():
+            if powersrc[0] == key:
+                self.player.attempt_charge(powersrc[0])
+                self.fsm.set_state(self.fsm.playing_state)
+                return
 
     def handle_updates(self) -> None:
         pass
@@ -451,45 +419,45 @@ class SelectState(PlayingState):
     def enter(self) -> None:
         self.select_x = self.player.x
         self.select_y = self.player.y
-        self._highlight_entity(tcod.white)
+        self._highlight_entity((255, 255, 255))
 
     def exit(self) -> None:
         self._highlight_entity(None)
 
-    def _highlight_entity(self, color: Optional[tuple[int, int, int]]) -> None:
-        self.entities.get_all_at(self.select_x, self.select_y)[0].bgcolor = color
+    def _highlight_entity(self, color: Optional[tuple[int, int, int]] = (255, 255, 255)) -> None:
+        self.entities.get_top_entity_at(self.select_x, self.select_y).bgcolor = color
 
-    def move_cursor(self, key: int) -> None:
-        if (key != tcod.event.K_UP and key != tcod.event.K_DOWN and
-                key != tcod.event.K_RIGHT and key != tcod.event.K_LEFT):
+    def move_cursor(self, key: Union[input.Key, str]) -> None:
+        if (key != input.Key.UP and key != input.Key.DOWN and
+                key != input.Key.RIGHT and key != input.Key.LEFT):
             return
 
-        if key == tcod.event.K_UP:
+        if key == input.Key.UP:
             if self.select_y > 0:
                 self._highlight_entity(None)
                 self.select_y -= 1
-                self._highlight_entity(tcod.white)
+                self._highlight_entity((255, 255, 255))
             else:
                 return
-        elif key == tcod.event.K_DOWN:
+        elif key == input.Key.DOWN:
             if self.select_y < (self.fsm.MAP_HEIGHT - 1):
                 self._highlight_entity(None)
                 self.select_y += 1
-                self._highlight_entity(tcod.white)
+                self._highlight_entity((255, 255, 255))
             else:
                 return
-        elif key == tcod.event.K_RIGHT:
+        elif key == input.Key.RIGHT:
             if self.select_x < (self.fsm.MAP_WIDTH - 1):
                 self._highlight_entity(None)
                 self.select_x += 1
-                self._highlight_entity(tcod.white)
+                self._highlight_entity((255, 255, 255))
             else:
                 return
-        elif key == tcod.event.K_LEFT:
+        elif key == input.Key.LEFT:
             if self.select_x > 0:
                 self._highlight_entity(None)
                 self.select_x -= 1
-                self._highlight_entity(tcod.white)
+                self._highlight_entity((255, 255, 255))
             else:
                 return
 
@@ -505,10 +473,8 @@ class ExamineState(SelectState):
     ) -> None:
         super().__init__(fsm, entities_, game_interface, player_)
 
-    def handle_input(self, event: tcod.event) -> None:
-        key: int = event.sym
-
-        if key == tcod.event.K_v:
+    def handle_input(self, key: Union[input.Key, str]) -> None:
+        if key == 'v':
             self.player.examine_target = self.entities.get_top_entity_at(self.select_x, self.select_y)
             self.fsm.set_state(self.fsm.desc_screen_state)
 
@@ -542,13 +508,11 @@ class SelectTargetState(SelectState):
     def update_bullet_path(self, extend: bool = False) -> None:
         self.player.bullet_path = self.player.get_line_of_sight(self.select_x, self.select_y, extend)
 
-    def handle_input(self, event: tcod.event) -> None:
-        key: int = event.sym
-
+    def handle_input(self, key: Union[input.Key, str]) -> None:
         self.move_cursor(key)
         self.update_bullet_path(True)
 
-        if key == tcod.event.K_RETURN:
+        if key == input.Key.ENTER:
             self.player.attempt_atk(self.select_x, self.select_y, True, self.player.bullet_path)
             self.fsm.reverse_state()
 
@@ -566,12 +530,10 @@ class SelectThrowState(SelectTargetState):
     ) -> None:
         super().__init__(fsm, entities_, game_interface, player_)
 
-    def handle_input(self, event: tcod.event) -> None:
-        key: int = event.sym
-
+    def handle_input(self, key: Union[input.Key, str]) -> None:
         self.move_cursor(key)
         self.update_bullet_path(False)
 
-        if key == tcod.event.K_RETURN:
+        if key == input.Key.ENTER:
             self.player.attempt_throw(self.select_x, self.select_y, self.player.item_selected, self.player.bullet_path)
             self.fsm.set_state(self.fsm.playing_state)
