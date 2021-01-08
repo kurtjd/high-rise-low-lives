@@ -7,17 +7,31 @@ Slowly been implementing the basic mechanics of the game. A lot of mechanics are
 
 ## Controls
 **arrow keys**: move
+
 **Esc**: Back/Quit
+
 **Enter**: Select
+
 **.**: Rest
+
 **,**: Pickup
+
 **Ctrl+C**: Close door
+
 **i**: View inventory
+
 **w**: Wield
+
 **q**: Use a drug
+
 **c**: Charge self
+
 **x**: Examine
+
 **v**: View details while in examine mode
+
 **f**: Aim weapon
+
 **t**: Throw
+
 **ff**: Reload weapon
