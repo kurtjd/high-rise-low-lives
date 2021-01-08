@@ -37,3 +37,8 @@ Slowly been implementing the basic mechanics of the game. A lot of mechanics are
 **t**: Throw
 
 **ff**: Reload weapon
+
+## Installation
+This was wirrten in Python 3.9, however lower versions may still work. To auto-install dependencies, run:
+
+**pip install -r requirements.txt**
