@@ -4,6 +4,7 @@ Short-Term ToDo
 *Consider making actions happen before delay instead of after
 *Use dicts or something instead of large if-else
 *Clean up, organize, comment, and docstring current code.
+*If top entity on tile is invisible, get underneath.
 
 
 Mid-Term ToDo
@@ -20,6 +21,9 @@ Mid-Term ToDo
 *Add graphic and color field to data files
 *Make it so you can use a character in tile data instead of int for graphic
 *Have drugs start off unknown
+*Hovering over something in examine mode shows basic info in message log.
+*Allow view of previous messages in log.
+*If message repeated, put a times modifier instead of repeating text.
 
 
 High-Rise: Low-Lives
