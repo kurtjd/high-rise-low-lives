@@ -1,14 +1,14 @@
 import entities
 
 
-# Each Actor carries a reference to one of these AI functions depending on its abilities and style.
-
-# For intelligent actors that like to fight up-close and personal.
 def smart_melee(src_actor: "entities.Actor", game_actors: list["entities.Actor"]) -> None:
+    """ For intelligent actors that like to fight up-close and personal.
+    This is basic, temporary AI. """
+
     # If not currently targeting an actor, find the player for now.
     if src_actor.atk_target is None:
         for entity in game_actors:
-            if entity.is_player:
+            if isinstance(entity, entities.Player):
                 src_actor.atk_target = entity
                 break
 
@@ -33,10 +33,13 @@ def smart_melee(src_actor: "entities.Actor", game_actors: list["entities.Actor"]
 
 
 def smart_ranged(src_actor: "entities.Actor", game_actors: list["entities.Actor"]) -> None:
+    """ For intelligent actors that like to fight from a distance.
+    This is basic, temporary AI. """
+
     # If not currently targeting an actor, find the player for now.
     if src_actor.atk_target is None:
         for entity in game_actors:
-            if entity.is_player:
+            if isinstance(entity, entities.Player):
                 src_actor.atk_target = entity
                 break
 
@@ -67,10 +70,13 @@ def smart_ranged(src_actor: "entities.Actor", game_actors: list["entities.Actor"
 
 
 def turret(src_actor: "entities.Actor", game_actors: list["entities.Actor"]) -> None:
+    """ For all stationary turrets.
+    This is basic, temporary AI. """
+
     # If not currently targeting an actor, find the player for now.
     if src_actor.atk_target is None:
         for entity in game_actors:
-            if entity.is_player:
+            if isinstance(entity, entities.Player):
                 src_actor.atk_target = entity
                 break
 

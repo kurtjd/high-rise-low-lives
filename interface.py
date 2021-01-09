@@ -4,6 +4,9 @@ import entities
 
 
 class Interface:
+    """Represents the entire user interface, like the stats panel, message log, inventory screen, etc.
+    This is quite temporary, as the interface will probably be overhauled as more game mechanics are added."""
+
     def __init__(self, screen_w: int, screen_h: int, map_w: int, map_h: int) -> None:
         self.screen_w: int = screen_w
         self.screen_h: int = screen_h

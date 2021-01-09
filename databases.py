@@ -2,6 +2,8 @@ import json
 
 
 class Databases:
+    """Holds all game data and provides methods for working with it."""
+
     def __init__(self) -> None:
         self.npcs: dict = {}
         self.weapons: dict = {}
@@ -14,6 +16,9 @@ class Databases:
         self.ammo: dict = {}
 
     def load_from_files(self) -> None:
+        """Loads in data from JSON files and assigns to respective dictionaries
+        so that other game objects can access the data."""
+
         # Colors
         with open("Data/colors.dat") as data_file:
             self.colors = json.load(data_file)

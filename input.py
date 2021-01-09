@@ -4,11 +4,15 @@ import tcod
 
 
 class EventType(Enum):
+    """Generic constants for the type of input event, ie: key press, mouse move, user quit, etc."""
+
     KEYDOWN = auto(),
     QUIT = auto()
 
 
 class Key(Enum):
+    """Generic constants for keys associated with a keypress the game can use."""
+
     CTRL_C = auto(),
     ENTER = auto(),
     ESCAPE = auto(),
@@ -23,7 +27,7 @@ class Key(Enum):
 
 def poll_input() -> tuple[EventType, Optional[Union[Key, str]]]:
     """Generic input poller that returns either a character if keys a-z were pressed
-    or a corresponding Key if anything else was pressed for the FSM to hand."""
+    or a corresponding Key if anything else was pressed for the FSM to handle."""
 
     event_type: EventType
     event_key: Optional[Union[Key, str]] = None
@@ -34,7 +38,6 @@ def poll_input() -> tuple[EventType, Optional[Union[Key, str]]]:
         "KEYDOWN": EventType.KEYDOWN,
         "QUIT": EventType.QUIT
     }
-
     keys: dict = {
         tcod.event.K_RETURN: Key.ENTER,
         tcod.event.K_ESCAPE: Key.ESCAPE,

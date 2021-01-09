@@ -1,7 +1,9 @@
 Short-Term ToDo
 ===============
-*Use dicts or something instead of large if-else
-*Clean up, organize, comment, and docstring current code.
+*Simplify move_cursor method.
+*Fix time showing 0 when targeting something.
+*Make separate method to determine hit message.
+*Replace dead actor with Corpse entity
 
 
 Mid-Term ToDo

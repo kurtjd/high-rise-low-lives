@@ -4,6 +4,10 @@ import interface
 
 
 class Map:
+    """Represents a game map.
+    Right now this is pretty useless other than the read_map method, because a map is just a collection of entities
+    and the game_entities list holds all of those."""
+
     def __init__(
             self,
             game_data: databases.Databases,
@@ -15,40 +19,23 @@ class Map:
         self.game_entities: entities.GameEntities = game_entities
         self.game_interface: interface.Interface = game_interface
 
-    # Converts a character from a map file into a game entity.
-    def _char_to_entity(
-            self,
-            char: str,
-            x: int,
-            y: int,
-    ) -> entities.Entity:
-        new_tile: dict
-        if char == '.':
-            new_tile = self.game_data.tiles["FLOOR"]
-        elif char == '-':
-            new_tile = self.game_data.tiles["WALL_HORIZ"]
-        elif char == '|':
-            new_tile = self.game_data.tiles["WALL_VERT"]
-        elif char == '1':
-            new_tile = self.game_data.tiles["WALL_COR_TL"]
-        elif char == '2':
-            new_tile = self.game_data.tiles["WALL_COR_TR"]
-        elif char == '3':
-            new_tile = self.game_data.tiles["WALL_COR_BR"]
-        elif char == '4':
-            new_tile = self.game_data.tiles["WALL_COR_BL"]
-        elif char == '#':
-            new_tile = self.game_data.tiles["HALL"]
-        elif char == ':':
-            new_tile = self.game_data.tiles["VENT_ENTER"]
-        elif char == '"':
-            new_tile = self.game_data.tiles["VENT"]
-        elif char == '+':
-            new_tile = self.game_data.tiles["DOOR_CLOSED"]
-        elif char == '_':
-            new_tile = self.game_data.tiles["DESK"]
-        else:
-            new_tile = self.game_data.tiles["BLANK"]
+    def _char_to_entity(self, char: str, x: int, y: int) -> entities.Entity:
+        """Converts a character from a map file into a game entity."""
+
+        tiles: dict = {
+            '.': self.game_data.tiles["FLOOR"],
+            '-': self.game_data.tiles["WALL_HORIZ"],
+            '|': self.game_data.tiles["WALL_VERT"],
+            '1': self.game_data.tiles["WALL_COR_TL"],
+            '2': self.game_data.tiles["WALL_COR_TR"],
+            '3': self.game_data.tiles["WALL_COR_BR"],
+            '4': self.game_data.tiles["WALL_COR_BL"],
+            '#': self.game_data.tiles["HALL"],
+            ':': self.game_data.tiles["VENT_ENTER"],
+            '+': self.game_data.tiles["DOOR_CLOSED"],
+            '_': self.game_data.tiles["DESK"]
+        }
+        new_tile: dict = tiles.get(char, self.game_data.tiles["BLANK"])
 
         if char == '+':
             new_entity = entities.Door(x, y, self.game_data, self.game_entities, self.game_interface)
@@ -72,8 +59,9 @@ class Map:
             )
         return new_entity
 
-    # Reads a map from a text file.
     def read_map(self, file: str) -> None:
+        """Reads a map from a text file."""
+
         map_file = open(file)
         map_lines = map_file.readlines()
 

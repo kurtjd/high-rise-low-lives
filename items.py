@@ -4,40 +4,37 @@ import drug_effects
 
 
 class Item:
-    # ~~~ PRIVATE METHODS ~~~
+    """Represents the details of an in-game item.
+    Not to be confused with an ItemEntity, which represents an item being displayed in the game world,
+    and has an Item object attached to it."""
 
-    def __init__(
-        self,
-        name: str,
-        desc: str,
-    ) -> None:
+    def __init__(self, name: str, desc: str) -> None:
         self.name: str = name
         self.desc: str = desc
 
     def on_pick_up(self, src_actor: "entities.Actor", amount: int = 1):
+        """Called when the item is picked up by an actor."""
+
         src_actor.add_inventory(self, amount)
 
 
 class Wieldable(Item):
-    def __init__(
-        self,
-        name: str,
-        desc: str
-    ) -> None:
+    """Represents any item that can be wielded."""
+
+    def __init__(self, name: str, desc: str) -> None:
         super().__init__(name, desc)
 
 
 class Throwable(Item):
-    def __init__(
-        self,
-        name: str,
-        desc: str
-    ) -> None:
+    """Represents any item that can be thrown."""
+
+    def __init__(self, name: str, desc: str) -> None:
         super().__init__(name, desc)
 
 
 class Weapon(Wieldable):
-    # ~~~ STATIC METHODS ~~~
+    """Represents any non-throwable weapon."""
+
     def __init__(
             self,
             name: str,
@@ -66,14 +63,9 @@ class Weapon(Wieldable):
 
 
 class Grenade(Throwable):
-    def __init__(
-        self,
-        name: str,
-        desc: str,
-        damage: int,
-        blast_radius: int,
-        fuse: int
-    ) -> None:
+    """Represents a grenade."""
+
+    def __init__(self, name: str, desc: str, damage: int, blast_radius: int, fuse: int) -> None:
         super().__init__(name, desc)
         self.damage = damage
         self.blast_radius = blast_radius
@@ -81,12 +73,10 @@ class Grenade(Throwable):
 
 
 class Drug(Item):
-    def __init__(
-        self,
-        name: str,
-        desc: str,
-        effect: Callable[..., None]
-    ) -> None:
+    """Represents a drug."""
+
+    def __init__(self, name: str, desc: str, effect: Callable[..., None]) -> None:
+        # Associate the string in the database with an actual function.
         effects: dict = {
             "use_stitch": drug_effects.use_stitch
         }
@@ -96,6 +86,8 @@ class Drug(Item):
 
 
 class PowerSource(Item):
+    """Represents an item that can be used to charge up the player."""
+
     def __init__(self, name: str, desc: str, charge_held: int, discharge_time: int) -> None:
         super().__init__(name, desc)
 
@@ -104,14 +96,20 @@ class PowerSource(Item):
 
 
 class Cigarette(Item):
+    """Represents a single unit of black-market currency."""
+
     def __init__(self, name: str, desc: str) -> None:
         super().__init__(name, desc)
 
     def on_pick_up(self, src_actor: "entities.Actor", amount: int = 1):
+        """Instead of adding to the inventory, picking up a cigarette just increases the player's total."""
+
         src_actor.smokes += amount
 
 
 class Ammo(Item):
+    """Represents a single round of ammunition."""
+
     def __init__(self, name: str, desc: str, caliber: str, ammo_type: str):
         super().__init__(name, desc)
         self.caliber = caliber

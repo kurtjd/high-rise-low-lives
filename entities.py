@@ -11,6 +11,8 @@ import bresenham
 
 
 class GameEntities:
+    """Stores and manages the lists of different game entities."""
+
     def __init__(self, window: Any, surface: Any) -> None:
         self.all: list[Entity] = []
         self.tiles: list[Tile] = []
@@ -25,13 +27,17 @@ class GameEntities:
         self.explosives: list[Explosive] = []
         self.player: Optional[Player] = None
 
-        self.window = window
-        self.surface = surface
+        self.window: Any = window
+        self.surface: Any = surface
 
     def get_all_at(self, x: int, y: int) -> list["Entity"]:
+        """Returns all the entities on a tile."""
+
         return [entity_ for entity_ in self.all if entity_.x == x and entity_.y == y]
 
     def get_top_entity_at(self, x: int, y: int, ignore_invis: bool = False) -> Optional["Entity"]:
+        """Returns the top-most entity on a tile."""
+
         if not ignore_invis:
             return self.get_all_at(x, y)[-1]
         else:
@@ -41,42 +47,56 @@ class GameEntities:
             for entity in all_:
                 if entity.visible:
                     return entity
+            return all_[0]  # If no visible entities at position, return the top invisible one anyway.
 
     def get_actor_at(self, x: int, y: int) -> Optional["Actor"]:
+        """Returns the actor on a tile if there is one."""
+
         for actor_ in self.actors:
             if actor_.x == x and actor_.y == y:
                 return actor_
         return None
 
     def get_door_at(self, x: int, y: int) -> Optional["Door"]:
+        """Returns the door on a tile if there is one."""
+
         for door_ in self.doors:
             if door_.x == x and door_.y == y:
                 return door_
         return None
 
     def get_items_at(self, x: int, y: int) -> list["ItemEntity"]:
+        """Returns all the item entities on a tile."""
+
         return [item_ for item_ in self.items if item_.x == x and item_.y == y]
 
     def get_terminal_at(self, x: int, y: int) -> Optional["Terminal"]:
+        """Returns the terminal on a tile if there is one."""
+
         for terminal_ in self.terminals:
             if terminal_.x == x and terminal_.y == y:
                 return terminal_
         return None
 
     def get_trap_at(self, x: int, y: int) -> Optional["Trap"]:
+        """Returns the trap on a tile if there is one."""
+
         for trap_ in self.traps:
             if trap_.x == x and trap_.y == y:
                 return trap_
         return None
 
     def get_vent_at(self, x: int, y: int) -> Optional["Vent"]:
+        """Returns the vent on a tile if there is one."""
+
         for vent_ in self.vents:
             if vent_.x == x and vent_.y == y:
                 return vent_
         return None
 
-    # Draws all game entities to the screen.
     def render_all(self, surface: Any) -> None:
+        """Renders all game entities."""
+
         for tile_ in self.tiles:
             tile_.render(surface)
 
@@ -107,37 +127,42 @@ class GameEntities:
         for actor_ in self.actors:
             actor_.render(surface)
 
-    # Called every tick of time to update entities.
     def update_all(self, game_time: int) -> None:
+        """Called every tick of time to update all entities."""
+
         for entity_ in self.all:
             entity_.update(game_time)
 
-    # Clears and resets all the lists.
     def reset(self) -> None:
+        """Clears and resets all the lists."""
+
         self.all = []
         self.actors = []
         self.doors = []
         self.items = []
 
-    # Reveals the vents and hides everything else.
-    def show_vents(self):
+    def show_vents(self) -> None:
+        """Reveals the vents and hides everything else."""
+
         for entity in self.all:
             if isinstance(entity, Vent) or isinstance(entity, Player):
                 entity.visible = True
             else:
-                entity.old_visible = entity.visible
+                entity.old_visible = entity.visible  # Store the current visibility.
                 entity.visible = False
 
     def hide_vents(self):
+        """Hides the vents and reveals everything else."""
+
         for entity in self.all:
             if isinstance(entity, Vent) and not entity.entrance:
                 entity.visible = False
             else:
-                entity.visible = entity.old_visible
+                entity.visible = entity.old_visible  # In case the entity was previously invisible.
 
 
 class Entity:
-    # ~~~ STATIC METHODS ~~~
+    """Represents any game entity."""
 
     def __init__(
             self,
@@ -158,40 +183,60 @@ class Entity:
         self.y: int = y
         self.name: str = name
         self.desc: str = desc
+        self.old_graphic = graphic
         self.graphic: str = graphic
         self.color: Optional[tuple[int, int, int]] = color
         self.bgcolor: Optional[tuple[int, int, int]] = None
         self.blocked: bool = blocked
-        self.old_visible: bool = visible  # Used to keep track of visibility before player ents vents
+        self.old_visible: bool = visible
         self.visible: bool = visible
+        self.noise_level: int = 0
+        self.cover_percent = cover_percent
+
         self.game_data: databases.Databases = game_data
         self.game_interface: interface.Interface = game_interface
         self.game_entities: GameEntities = game_entities_
 
-        self.noise_level: int = 0
-        self.cover_percent = cover_percent
-
         game_entities_.all.append(self)
 
-    # ~~~ PUBLIC METHODS ~~~
-
-    # Draws a game entity to the screen
     def render(self, surface: Any) -> None:
+        """Renders the entity."""
+
         if self.visible:
             rendering.render(surface, self.graphic, self.x, self.y, self.color, self.bgcolor)
 
     def update(self, game_time: int) -> None:
+        """Updates the entity."""
         pass
 
     def remove(self) -> None:
+        """Removes the entity from the list of all entities."""
+
         for entity_ in enumerate(self.game_entities.all):
             if entity_[1] is self:
                 self.game_entities.all.pop(entity_[0])
 
     def make_noise(self, noise_radius: int) -> None:
+        """Causes this entity to make noise."""
         self.noise_level = noise_radius
 
-    # Uses the bresenham line algorithm to get a list of points on the map the LOS would pass through.
+    def highlight(self, color: Optional[tuple[int, int, int]]):
+        """Highlights this entity by setting it's background color.
+           If the tile is invisible, do some stuff to still get a highlight of it."""
+
+        self.bgcolor = color
+
+        if self.visible:
+            if color is None:
+                self.visible = self.old_visible
+                self.graphic = self.old_graphic
+        else:
+            if color is not None:
+                self.old_visible = self.visible
+                self.old_graphic = self.graphic
+                self.graphic = ' '
+                self.visible = True
+
     def get_line_of_sight(
             self,
             x2: int,
@@ -199,12 +244,14 @@ class Entity:
             extend: bool = False,
             ignore_cover: bool = True
     ) -> list[tuple[int, int]]:
+        """Uses the bresenham line algorithm to get a list of points on the map the LOS would pass through."""
+
         end_x: int = x2
         end_y: int = y2
 
         # Extend the path beyond where entity selected using slope of line.
         if extend:
-            end_x = x2 + ((x2 - self.x) * 20)
+            end_x = x2 + ((x2 - self.x) * 20)  # 20 is arbitrary number for max LOS range.
             end_y = y2 + ((y2 - self.y) * 20)
 
         # Disclude the entity from the LOS.
@@ -220,13 +267,15 @@ class Entity:
 
         return final_los
 
-    def render_sleep(
+    def render_projectile(
             self,
             points: list[tuple[int, int]],
             char: str,
             color: tuple[int, int, int],
             delay: float
     ) -> None:
+        """'Animates' a projectile as it flies through the air by sleeping briefly between renders."""
+
         self.game_entities.render_all(self.game_entities.surface)
         for point in points:
             rendering.render(self.game_entities.surface, char, point[0], point[1], color)
@@ -234,6 +283,9 @@ class Entity:
         time.sleep(delay)
 
     def compute_fov(self, radius: int, ignore_cover: bool = True) -> list[tuple[int, int]]:
+        """Computes all seeable points in a radius from the entity by casting a line along the circumference
+        of the radius and seeing if the line hits any blocked objects."""
+
         top: int = self.y - radius
         bottom: int = self.y + radius
         left: int = self.x - radius
@@ -259,8 +311,11 @@ class Entity:
 
 
 class Actor(Entity):
-    # Actors can be performing one of these actions:
+    """Represents an actor (an entity that can do things)."""
+
     class Action(Enum):
+        """All the actions an actor can be performing."""
+
         NONE = auto(),
         MOVE = auto(),
         ATK_MELEE = auto(),
@@ -275,8 +330,6 @@ class Actor(Entity):
         USE_DRUG = auto(),
         CHARGE = auto(),
         RELOAD = auto()
-
-    # ~~~ PRIVATE METHODS ~~~
 
     def __init__(
             self,
@@ -293,7 +346,6 @@ class Actor(Entity):
             wits: int,
             grit: int,
             ai_: Optional[Callable[..., None]],
-            is_player: bool,
             graphic: str,
             color: tuple[int, int, int],
             game_data: databases.Databases,
@@ -302,16 +354,11 @@ class Actor(Entity):
     ) -> None:
         super().__init__(x, y, name, desc, True, graphic, color, game_data, game_entities_, game_interface)
 
-        # Descriptors
+        # Background
         self.race: str = race
         self.class_name: str = class_name
-        self.is_player: bool = is_player
-
-        # This contains a function name corresponding to one of the AI functions in ai.py
-        self.ai: Callable[[Actor, list[Actor]], None] = ai_
 
         # Attributes
-        self.health: int = health
         self.muscle: int = muscle
         self.smarts: int = smarts
         self.reflexes: int = reflexes
@@ -324,21 +371,24 @@ class Actor(Entity):
 
         # Other stats
         self.charge_percent = 100
+        self.health: int = health
         self.mp: int = 50
         self.ac: int = 6
         self.base_atk_dmg: int = 10
         self.atk_dmg: int = self.base_atk_dmg
+
+        # Action speeds
         self.gen_speed: int = 5
         self.move_speed: int = 10
         self.atk_speed: int = 10
         self.wield_speed: int = 5
         self.hack_speed: int = 20
         self.rest_speed: int = 10
-        self.throw_speed = 8
-        self.reload_speed = 10
+        self.throw_speed: int = 8
+        self.reload_speed: int = 10
         self.recovery_rate: int = 10
 
-        # Inventory/Equipped
+        # Inventory/Equipment
         self.MAX_INVENTORY_SIZE: int = 52
         self.inventory: dict = {}
         self.wielding: Optional[items.Weapon] = None
@@ -360,37 +410,42 @@ class Actor(Entity):
         # Misc
         self.in_vents: bool = False
 
+        # This contains a function name corresponding to one of the AI functions in ai.py
+        self.ai: Callable[[Actor, list[Actor]], None] = ai_
+
         # If not the player, set a default action. For now, just rest.
-        if not is_player:
+        if not isinstance(self, Player):
             self._do_action(self.Action.REST, 1)
 
         game_entities_.actors.append(self)
 
-    # ~~~ UTILITY METHODS ~~~
-    # Let the AI think of a new action.
     def _think(self) -> None:
-        # This uses the function name stored in self.ai to call one of the AI functions and passes self
+        """Used by non-player actors to call their corresponding AI function."""
+
         self.ai(self, self.game_entities.actors)
 
-    # Finds the correct a-zA-Z character to assign as an id to a newly acquired items.
     def _get_next_item_id(self) -> str:
-        # Item IDs can be a-zA-Z so loop through all ASCII numbers skipping the non-alpha in between.
-        for item_id in range(65, 123):
-            if 91 <= item_id <= 96:
-                continue
+        """Finds the correct a-zA-Z character to assign as an id to a newly acquired items."""
 
+        # Item IDs can be a-zA-Z so loop through all ASCII numbers that match letters.
+        for item_id in range(ord('a'), ord('z') + 1):
+            if not chr(item_id) in self.inventory:
+                return chr(item_id)
+        for item_id in range(ord('A'), ord('Z') + 1):
             if not chr(item_id) in self.inventory:
                 return chr(item_id)
 
-    # Decreases the amount of an item in the inventory and deletes it if zero.
     def _dec_item_count(self, item_id: str, amount: int = 1) -> None:
+        """Decreases the amount of an item in the inventory and deletes it if zero."""
+
         self.inventory[item_id]["Amount"] -= amount
 
         if self.inventory[item_id]["Amount"] == 0:
             del self.inventory[item_id]
 
-    # Called when the player fires a ranged weapon and we need to decrease the correct ammo from inventory.
     def _dec_ammo_count(self, caliber: str, amount: int = 1) -> None:
+        """Called when the player fires a ranged weapon and we need to decrease the correct ammo from inventory."""
+
         for ammo_ in self.inventory.items():
             if isinstance(ammo_[1]["Item"], items.Ammo) and ammo_[1]["Item"].caliber == caliber:
                 ammo_[1]["Amount"] -= amount
@@ -400,25 +455,29 @@ class Actor(Entity):
 
                 return
 
-    # Actors can potentially be reanimated so it is only "playing" dead
-    def _play_dead(self) -> None:
+    def _die(self) -> None:
+        """Called when actor's HP reaches zero."""
+
         self.graphic = self.game_data.tiles["CORPSE"]["Character"]
         self.color = self.game_data.tiles["CORPSE"]["Color"]
         self.blocked = self.game_data.tiles["CORPSE"]["Blocked"]
+        # In future remove actor from game and replace with Corpse entity that holds actor's stats incase of revival.
 
         # Just quit the game for now to prevent crash.
-        if self.is_player:
+        if isinstance(self, Player):
             raise SystemExit()
 
-    # Recovers stats
     def _recover(self) -> None:
+        """Restores some stats to the actor."""
+
         self.health += 1
         if self.health > 100:
             self.health = 100
 
-    # Called after action cooldown has passed.
-    # Resets all counters and associated variables allowing for new action to be selected.
     def _reset_action(self) -> None:
+        """Called after action cooldown has passed.
+           Resets all counters and associated variables allowing for new action to be selected."""
+
         self.action = self.Action.NONE
         self.action_target_x = 0
         self.action_target_y = 0
@@ -427,45 +486,38 @@ class Actor(Entity):
         self.dest_y = 0
 
         # Allow the AI to think of a new action.
-        if not self.is_player:
+        if not isinstance(self, Player):
             self._think()
 
-    # Actually performs the action by calling the appropriate method.
     def _do_action(self, action: Action, cooldown: int, target_x: int = 0, target_y: int = 0) -> None:
+        """Actually performs the action by calling the appropriate method."""
+
+        # Associates a method with each action.
+        actions: dict = {
+            self.Action.ATK_MELEE: self._attack_melee,
+            self.Action.ATK_RANGED: self._attack_ranged,
+            self.Action.MOVE: self.move,
+            self.Action.OPEN_DOOR: self._open_door,
+            self.Action.CLOSE_DOOR: self._close_door,
+            self.Action.REST: self._rest,
+            self.Action.PICKUP: self._pick_up,
+            self.Action.WIELD: self._wield,
+            self.Action.HACK: self._hack,
+            self.Action.THROW: self._throw,
+            self.Action.USE_DRUG: self._use_drug,
+            self.Action.CHARGE: self._charge,
+            self.Action.RELOAD: self._reload
+        }
+
         self.action = action
         self.action_cooldown = cooldown
         self.action_target_x = target_x
         self.action_target_y = target_y
+        actions[action]()
 
-        if self.action == self.Action.ATK_MELEE:
-            self._attack_melee()
-        elif self.action == self.Action.ATK_RANGED:
-            self._attack_ranged()
-        elif self.action == self.Action.MOVE:
-            self.move()
-        elif self.action == self.Action.OPEN_DOOR:
-            self._open_door()
-        elif self.action == self.Action.CLOSE_DOOR:
-            self._close_door()
-        elif self.action == self.Action.REST:
-            self._rest()
-        elif self.action == self.Action.PICKUP:
-            self._pick_up()
-        elif self.action == self.Action.WIELD:
-            self._wield()
-        elif self.action == self.Action.HACK:
-            self._hack()
-        elif self.action == self.Action.THROW:
-            self._throw()
-        elif self.action == self.Action.USE_DRUG:
-            self._use_drug()
-        elif self.action == self.Action.CHARGE:
-            self._charge()
-        elif self.action == self.Action.RELOAD:
-            self._reload()
-
-    # Attempts to open a door.
     def _open_door(self) -> None:
+        """Opens a door if it's not locked or if actor has key."""
+
         target_door: Door = self.game_entities.get_door_at(self.action_target_x, self.action_target_y)
         if not target_door.locked:
             target_door.open()
@@ -474,22 +526,29 @@ class Actor(Entity):
                 f"That door is locked.", self.game_data.colors["ERROR_MSG"]
             )
 
-    # Attempts to hack a terminal.
+    def _close_door(self) -> None:
+        """Actually closes the door."""
+
+        target_door: Door = self.game_entities.get_door_at(self.action_target_x, self.action_target_y)
+        target_door.close()
+
     def _hack(self) -> None:
+        """Attempts to hack a terminal."""
+
         target_terminal: Terminal = self.game_entities.get_terminal_at(
             self.action_target_x,
             self.action_target_y
         )
         target_terminal.attempt_hack(self)
 
-    # Performs a melee attack
     def _attack_melee(self) -> None:
+        """Performs a melee attack."""
+
         target_actor: Actor = self.game_entities.get_actor_at(self.action_target_x, self.action_target_y)
-        # The Actor, if fast enough, may have moved away before attack could finish
-        # Or player purposely attempts to attack something that can't be attacked
+
         if target_actor is None:
             self.game_interface.message_box.add_msg(
-                f"{self.name} attacks thin air!", self.game_data.colors["ERROR_MSG"]
+                f"{self.name}'s attack fails!", self.game_data.colors["ERROR_MSG"]
             )
             return
 
@@ -499,13 +558,14 @@ class Actor(Entity):
 
         target_actor.receive_hit(self, self.atk_dmg, 100)
 
-    # Performs a ranged attack
     def _attack_ranged(self) -> None:
+        """Performs a ranged attack."""
+
         self.wielding.rounds_in_mag -= 1
 
         # Check each point within the bullet path for something that can be attacked.
         # If the actor is adjacent to cover and the bullet passes through the cover, subtract its cover percent from
-        # the chane to hit.
+        # the chance to hit.
         prev_entity_cover: int = 0
         for point in self.bullet_path:
             entity_at_point: Entity = self.game_entities.get_top_entity_at(point[0], point[1])
@@ -516,16 +576,18 @@ class Actor(Entity):
                 prev_entity_cover = entity_at_point.cover_percent
 
             # Want to un-hardcode the character and animation delay later.
-            self.render_sleep([(point[0], point[1])], ')', self.game_data.colors["RED"], 0.01)
+            self.render_projectile([(point[0], point[1])], ')', self.game_data.colors["RED"], 0.01)
 
         self.game_interface.message_box.add_msg(
             f"{self.name} shoots at nothing.", self.game_data.colors["ERROR_MSG"]
         )
 
     def _throw(self) -> None:
+        """Throws an object."""
+
         # Draw the throwable as it goes through the air
         for point in self.bullet_path:
-            self.render_sleep([(point[0], point[1])], ')', self.game_data.colors["RED"], 0.01)
+            self.render_projectile([(point[0], point[1])], ')', self.game_data.colors["RED"], 0.01)
 
         x: int
         y: int
@@ -567,6 +629,8 @@ class Actor(Entity):
             )
 
     def _reload(self) -> None:
+        """Reloads the currently wield firearm with the appropriate ammo."""
+
         mag_capacity: int = self.wielding.mag_capacity
         ammo_count: int = self.get_ammo_amount(self.wielding.caliber)
 
@@ -585,8 +649,9 @@ class Actor(Entity):
             f"{self.name} reloads his {self.wielding.name}.", self.game_data.colors["SUCCESS_MSG"]
         )
 
-    # Update what the player is wielding and change stats to reflect that.
     def _wield(self) -> None:
+        """Update what the player is wielding and change stats to reflect that."""
+
         if self.action_target is None:
             self.wielding = None
             self.atk_dmg = self.base_atk_dmg
@@ -604,6 +669,8 @@ class Actor(Entity):
                 self._reload()
 
     def _use_drug(self):
+        """Uses a drug."""
+
         drug: items.Drug = self.inventory[self.action_target]["Item"]
         drug.effect(self)
 
@@ -614,6 +681,8 @@ class Actor(Entity):
         self._dec_item_count(self.action_target)
 
     def _charge(self):
+        """Increases charge of actor."""
+
         powersrc: items.PowerSource = self.inventory[self.action_target]["Item"]
         self.charge_percent += powersrc.charge_held
 
@@ -624,18 +693,14 @@ class Actor(Entity):
 
         self._dec_item_count(self.action_target)
 
-    # Actually closes the door.
-    def _close_door(self) -> None:
-        target_door: Door = self.game_entities.get_door_at(self.action_target_x, self.action_target_y)
-        target_door.close()
-
-    # Actually rests
-    # Essentially does nothing.
     def _rest(self) -> None:
+        """'Rests' by just doing nothing."""
+
         pass
 
-    # Actually picks up an items.
     def _pick_up(self) -> None:
+        """Actually picks up an items."""
+
         # Get all items at target and ask which to pick-up
         # For now just pick up first item
         items_: list[ItemEntity] = self.game_entities.get_items_at(
@@ -648,15 +713,45 @@ class Actor(Entity):
             f"{self.name} picks up a {item.name}.", self.game_data.colors["SUCCESS_MSG"]
         )
 
-    # ~~~ PUBLIC METHODS ~~~
-
-    # Adds an item to the inventory
     def add_inventory(self, item_: items.Item, amount: int = 1) -> None:
+        """Adds an item to the inventory"""
+
         self.inventory[self._get_next_item_id()] = {"Item": item_, "Amount": amount}
 
-    # Called by anything that wants to damage this actor.
+    def get_wieldable_items(self) -> [items.Wieldable]:
+        """Returns a list of items in the actor's inventory that can be wielded."""
+
+        return [item_ for item_ in self.inventory.items() if isinstance(item_[1]["Item"], items.Wieldable)]
+
+    def get_throwable_items(self) -> [items.Throwable]:
+        """Returns a list of items in the actor's inventory that can be thrown."""
+
+        return [item_ for item_ in self.inventory.items() if isinstance(item_[1]["Item"], items.Throwable)]
+
+    def get_drug_items(self) -> [items.Drug]:
+        """Returns a list of drugs in the actor's inventory."""
+
+        return [item_ for item_ in self.inventory.items() if isinstance(item_[1]["Item"], items.Drug)]
+
+    def get_power_sources(self) -> [items.PowerSource]:
+        """Returns a list of power sources in the actor's inventory."""
+
+        return [item_ for item_ in self.inventory.items() if isinstance(item_[1]["Item"], items.PowerSource)]
+
+    def get_ammo_amount(self, caliber: str) -> int:
+        """Returns how much ammo of a given caliber the actor has in inventory."""
+
+        total_amount = 0
+        for ammo_ in self.inventory.items():
+            if isinstance(ammo_[1]["Item"], items.Ammo) and ammo_[1]["Item"].caliber == caliber:
+                total_amount += ammo_[1]["Amount"]
+
+        return total_amount
+
     def receive_hit(self, src_entity: Entity, atk_dmg: int, hit_chance: int, ranged: bool = False) -> None:
-        # Calculate random and shit later
+        """Called by anything that wants to damage this actor."""
+
+        # Eventually do a bunch of calculations to see if hit actually lands.
         if hit_chance:
             pass
 
@@ -703,17 +798,17 @@ class Actor(Entity):
 
             msg_color = self.game_data.colors["KILL_MSG"]
 
-            self._play_dead()
+            self._die()
 
         self.game_interface.message_box.add_msg(hit_msg, msg_color)
 
-    # ~~~ ACTION METHODS ~~~
-    # Moves to a new position.
     def move(self) -> None:
+        """Moves the actor to a new position."""
+
         # We need to check again that the destination isn't blocked in case something moved there in the meantime.
         for dest_entity in self.game_entities.get_all_at(self.dest_x, self.dest_y):
             if dest_entity.blocked:
-                if self.is_player:
+                if isinstance(self, Player):
                     self.game_interface.message_box.add_msg(
                         f"{self.name} slams into something.", self.game_data.colors["ERROR_MSG"]
                     )
@@ -722,27 +817,6 @@ class Actor(Entity):
         self.x = self.dest_x
         self.y = self.dest_y
 
-    def get_wieldable_items(self) -> [items.Wieldable]:
-        return [item_ for item_ in self.inventory.items() if isinstance(item_[1]["Item"], items.Wieldable)]
-
-    def get_throwable_items(self) -> [items.Throwable]:
-        return [item_ for item_ in self.inventory.items() if isinstance(item_[1]["Item"], items.Throwable)]
-
-    def get_drug_items(self) -> [items.Drug]:
-        return [item_ for item_ in self.inventory.items() if isinstance(item_[1]["Item"], items.Drug)]
-
-    def get_power_sources(self) -> [items.PowerSource]:
-        return [item_ for item_ in self.inventory.items() if isinstance(item_[1]["Item"], items.PowerSource)]
-
-    def get_ammo_amount(self, caliber: str) -> int:
-        total_amount = 0
-        for ammo_ in self.inventory.items():
-            if isinstance(ammo_[1]["Item"], items.Ammo) and ammo_[1]["Item"].caliber == caliber:
-                total_amount += ammo_[1]["Amount"]
-
-        return total_amount
-
-    # Calls the appropriate attack function.
     def attempt_atk(
             self,
             x: int,
@@ -750,6 +824,8 @@ class Actor(Entity):
             ranged: bool = False,
             bullet_path: Optional[list[tuple[int, int]]] = None
     ) -> None:
+        """Perform some checks before actually attacking."""
+
         if not ranged:
             self._do_action(self.Action.ATK_MELEE, self.atk_speed, x, y)
         else:
@@ -759,18 +835,19 @@ class Actor(Entity):
                     self.bullet_path = bullet_path
                     self._do_action(self.Action.ATK_RANGED, self.atk_speed, x, y)
                 else:
-                    if self.is_player:
+                    if isinstance(self, Player):
                         self.game_interface.message_box.add_msg(
                             f"You are out of ammo! Try reloading.", self.game_data.colors["ERROR_MSG"]
                         )
-            elif self.is_player:
+            elif isinstance(self, Player):
                 # Is the player not wielding a ranged weapon?
                 self.game_interface.message_box.add_msg(
                     f"You are not wielding a ranged weapon.", self.game_data.colors["ERROR_MSG"]
                 )
 
-    # Makes sure the Actor can actually move to where it wants to go.
     def attempt_move(self, x: int, y: int) -> bool:
+        """Perform some checks before moving."""
+
         # The destination the actor is attempting to move to
         new_x: int = self.x + x
         new_y: int = self.y + y
@@ -792,7 +869,7 @@ class Actor(Entity):
                 elif isinstance(dest_entity, Terminal):
                     self._do_action(self.Action.HACK, self.hack_speed, new_x, new_y)
                     return True
-                elif isinstance(dest_entity, Vent) and not self.is_player:
+                elif isinstance(dest_entity, Vent) and not isinstance(self, Player):
                     return False  # Don't let NPCs follow player into vents
 
                 # Prevent from moving into blocked entity.
@@ -804,43 +881,52 @@ class Actor(Entity):
         return True
 
     def attempt_throw(self, x: int, y: int, item: items.Item, throw_path: Optional[list[tuple[int, int]]] = None):
+        """Perform some checks before throwing item."""
+
         self.bullet_path = throw_path
         self.throwing = item
         self._do_action(self.Action.THROW, self.throw_speed, x, y)
 
-    # Attempts to pick an item up off the floor where the Actor is standing.
     def attempt_pickup(self) -> None:
+        """Perform some checks before picking up item."""
+
         # Only pick up if there's something on the floor.
         if self.game_entities.get_items_at(self.x, self.y):
             self._do_action(self.Action.PICKUP, self.gen_speed, self.x, self.y)
-        elif self.is_player:
+        elif isinstance(self, Player):
             self.game_interface.message_box.add_msg(
                 "There's nothing here to pickup.", self.game_data.colors["ERROR_MSG"]
             )
 
-    # Attempts to wield a new weapon
     def attempt_wield(self, new_weapon: Optional[items.Item]) -> None:
+        """Perform some checks before wielding weapon."""
+
         # Make sure attempting to wield an actual weapon.
         # Include None because that is fists.
-        if (new_weapon is not None and not isinstance(new_weapon, items.Weapon)) and self.is_player:
+        if (new_weapon is not None and not isinstance(new_weapon, items.Weapon)) and isinstance(self, Player):
             self.game_interface.message_box.add_msg(
                 f"{self.name} cannot wield a {new_weapon.name}.", self.game_data.colors["ERROR_MSG"]
             )
             return
 
-        # Finally set the action and send a message.
         self.action_target = new_weapon
         self._do_action(self.Action.WIELD, self.wield_speed)
 
     def attempt_use_drug(self, drug_id: str) -> None:
+        """Perform some checks before using drug."""
+
         self.action_target = drug_id
         self._do_action(self.Action.USE_DRUG, self.gen_speed)
 
     def attempt_charge(self, powersrc_id: str) -> None:
+        """Perform some checks before charging up."""
+
         self.action_target = powersrc_id
         self._do_action(self.Action.CHARGE, self.gen_speed)
 
     def attempt_reload(self) -> None:
+        """Perform some checks before reloading."""
+
         if not isinstance(self.wielding, items.Weapon) or self.wielding.distance != "RANGED":
             self.game_interface.message_box.add_msg(
                 "You can't reload your current weapon.",
@@ -859,8 +945,9 @@ class Actor(Entity):
         else:
             self._do_action(self.Action.RELOAD, self.reload_speed)
 
-    # Checks for open doors around the Actor and closes them if they exist.
     def attempt_close_door(self) -> None:
+        """Checks for open doors around the Actor and closes them if they exist."""
+
         for x in range(-1, 2):
             for y in range(-1, 2):
                 if x != 0 or y != 0:
@@ -869,17 +956,19 @@ class Actor(Entity):
                         self._do_action(self.Action.CLOSE_DOOR, self.gen_speed, target_door.x, target_door.y)
                         return
 
-        if self.is_player:
+        if isinstance(self, Player):
             self.game_interface.message_box.add_msg(
                 "There's no door to be closed here.", self.game_data.colors["ERROR_MSG"]
             )
 
-    # Actor rests to recover HP and other stuff
     def attempt_rest(self) -> None:
+        """Performs some checks before resting."""
+
         self._do_action(self.Action.REST, self.rest_speed)
 
-    # Called every tick of game time.
     def update(self, game_time: int) -> None:
+        """Update the actor."""
+
         # Do nothing if dead.
         if self.health <= 0:
             return
@@ -888,7 +977,7 @@ class Actor(Entity):
         if game_time > 0 and (game_time % self.recovery_rate) == 0:
             self._recover()
 
-        # If actor is still in cooldown from previos action, decrease cooldown.
+        # If actor is still in cooldown from previous action, decrease cooldown.
         if self.action_cooldown > 0:
             self.action_cooldown -= 1
 
@@ -898,6 +987,8 @@ class Actor(Entity):
 
 
 class Player(Actor):
+    """Represents the player character."""
+
     def __init__(
             self,
             name: str,
@@ -919,17 +1010,21 @@ class Player(Actor):
             game_interface: interface.Interface
     ) -> None:
         super().__init__(name, race, class_name, desc, x, y, health, muscle, smarts, reflexes, wits, grit,
-                         None, True, graphic, color, game_data, game_entities_, game_interface)
+                         None, graphic, color, game_data, game_entities_, game_interface)
 
-        self.examine_target: Any = None
-        self.item_selected: Optional[items.Item] = None
+        self.examine_target: Any = None  # What the player selected to examine.
+        self.item_selected: Optional[items.Item] = None  # What the player has selected from inventory to be used.
 
         self.max_charge_loss_delay: int = 100  # The number of turns before losing a percent of charge.
         self.charge_loss_delay = self.max_charge_loss_delay
 
+        self.vent_speed_multi = 2
+
         game_entities_.player = self
 
     def move(self) -> None:
+        """Moves the player."""
+
         super().move()
 
         # If the player moves into or out of vents, change what is visible.
@@ -938,15 +1033,15 @@ class Player(Actor):
             if not self.in_vents:
                 self.game_entities.show_vents()
                 self.in_vents = True
-                self.move_speed = self.move_speed * 2  # Makes moving slower in vents
+                self.move_speed *= self.vent_speed_multi
             elif vent.entrance:
                 self.game_entities.hide_vents()
                 self.in_vents = False
-                self.move_speed = self.move_speed / 2  # Return to normal speed.
+                self.move_speed /= self.vent_speed_multi
         elif self.in_vents:
             self.game_entities.hide_vents()
             self.in_vents = False
-            self.move_speed = self.move_speed / 2  # Return to normal speed.
+            self.move_speed /= self.vent_speed_multi
 
         # If the player walks onto a trap, trigger it.
         trap: Trap = self.game_entities.get_trap_at(self.x, self.y)
@@ -954,6 +1049,8 @@ class Player(Actor):
             trap.trigger()
 
     def attempt_move(self, x: int, y: int) -> bool:
+        """Does some checks before actually letting the player move."""
+
         # The destination the player is attempting to move to
         new_x: int = self.x + x
         new_y: int = self.y + y
@@ -972,7 +1069,11 @@ class Player(Actor):
         super().attempt_move(x, y)
 
     def update(self, game_time: int) -> None:
+        """Updates the player."""
+
         super().update(game_time)
+
+        # Decreases the player's charge as time goes on.
         self.charge_loss_delay -= 1
 
         if self.charge_loss_delay == 0:
@@ -981,6 +1082,8 @@ class Player(Actor):
 
 
 class Turret(Actor):
+    """Represents a turret."""
+
     def __init__(
             self,
             x: int,
@@ -1007,7 +1110,6 @@ class Turret(Actor):
             self.turret_data["Wits"],
             self.turret_data["Grit"],
             ai.turret,
-            False,
             self.turret_data["Graphic"],
             self.turret_data["Color"],
             game_data,
@@ -1019,7 +1121,7 @@ class Turret(Actor):
 
 
 class ItemEntity(Entity):
-    # ~~~ PRIVATE METHODS ~~~
+    """Represents an item entity, not to be confused with an actual item."""
 
     def __init__(
             self,
@@ -1035,18 +1137,22 @@ class ItemEntity(Entity):
             game_interface: interface.Interface
     ) -> None:
         super().__init__(x, y, name, desc, False, graphic, color, game_data, game_entities_, game_interface)
-        self.item: items.Item = item_
+
+        self.item: items.Item = item_  # The actual item this entity represents.
+
         game_entities_.items.append(self)
 
-    # ~~~ PUBLIC METHODS ~~~
-
     def actor_pick_up(self, actor_: Actor, amount: int = 1) -> items.Item:
+        """Called when the actor picks up the item entity."""
+
         self.item.on_pick_up(actor_, amount)
         self.remove()
 
         return self.item
 
     def remove(self) -> None:
+        """Removes the item entity from the list of all item entities."""
+
         game_items: list[ItemEntity] = self.game_entities.items
         for item_ in enumerate(game_items):
             if item_[1] is self:
@@ -1056,6 +1162,8 @@ class ItemEntity(Entity):
 
 
 class Tile(Entity):
+    """Represents a static tile on the game map."""
+
     def __init__(
             self,
             x: int,
@@ -1090,6 +1198,8 @@ class Tile(Entity):
 
 
 class Vent(Tile):
+    """Represents a vent."""
+
     def __init__(
             self,
             x: int,
@@ -1099,9 +1209,10 @@ class Vent(Tile):
             game_interface: interface.Interface,
             entrance: bool = False
     ) -> None:
-        self.entrance: bool = entrance
+        self.entrance: bool = entrance  # Whether or not this is an entrance vent.
         visible: bool = True
         tile: dict
+
         if self.entrance:
             tile = game_data.tiles["VENT_ENTER"]
         else:
@@ -1127,7 +1238,7 @@ class Vent(Tile):
 
 
 class Door(Entity):
-    # ~~~ PRIVATE METHODS ~~~
+    """Represents a door"""
 
     def __init__(
             self,
@@ -1138,6 +1249,7 @@ class Door(Entity):
             game_interface: interface.Interface
     ) -> None:
         tile: dict = game_data.tiles["DOOR_CLOSED"]
+
         super().__init__(
             x,
             y,
@@ -1153,12 +1265,12 @@ class Door(Entity):
         )
         self.opened: bool = False
         self.locked: bool = False
+
         game_entities_.doors.append(self)
 
-    # ~~~ PUBLIC METHODS ~~~
-
-    # Changes the appearance of the door and makes it no longer blocked.
     def open(self) -> None:
+        """Changes the appearance of the door and makes it no longer blocked."""
+
         self.opened = True
         self.blocked = False
         self.graphic = self.game_data.tiles["DOOR_OPEN"]["Character"]
@@ -1166,6 +1278,8 @@ class Door(Entity):
         self.cover_percent = self.game_data.tiles["DOOR_OPEN"]["Cover Percent"]
 
     def close(self) -> None:
+        """Changes the appearance of the door and makes it blocked."""
+
         self.opened = False
         self.blocked = True
         self.graphic = self.game_data.tiles["DOOR_CLOSED"]["Character"]
@@ -1179,11 +1293,15 @@ class Terminal(Entity):
          If failed to hack, can do nasty things like sound an alarm, explode, give you a virus, etc """
 
     class SuccessResult(Enum):
+        """All the good things that can happen upon a successful hack."""
+
         DISABLE_CAMS: int = auto(),
         DISABLE_TURRETS: int = auto(),
         UNLOCK_DOORS: int = auto()
 
     class FailResult(Enum):
+        """All the bad things that can happen upon a failed hack."""
+
         SOUND_ALARM: int = auto(),
         EXPLODE: int = auto()
 
@@ -1196,6 +1314,7 @@ class Terminal(Entity):
             game_interface: interface.Interface
     ) -> None:
         tile: dict = game_data.tiles["TERMINAL"]
+
         super().__init__(x, y, tile["Name"], tile["Desc"], tile["Blocked"],
                          tile["Character"], tile["Color"], game_data, game_entities_, game_interface)
 
@@ -1206,14 +1325,17 @@ class Terminal(Entity):
 
         game_entities_.terminals.append(self)
 
-    # This will decide randomly which and how many success/fail results to generate for this terminal.
-    # The number of success will increase difficulty and the higher the difficulty the more number of fails.
     def _choose_results(self) -> None:
+        """This will eventually decide randomly which and how many success/fail results to generate for this terminal.
+           The number of success will increase difficulty and the higher the difficulty the more number of fails."""
+
         self.success_results.append(self.SuccessResult.UNLOCK_DOORS)
         self.fail_results.append(self.FailResult.SOUND_ALARM)
         self.difficulty = 5
 
     def _unlock_doors(self) -> None:
+        """Unlocks all doors on the current floor."""
+
         for door in self.game_entities.doors:
             door.locked = False
 
@@ -1222,13 +1344,16 @@ class Terminal(Entity):
         )
 
     def _sound_alarm(self) -> None:
-        self.make_noise(50)
+        """Sounds an alarm by generating a lot of noise."""
+
+        self.make_noise(999)
         self.game_interface.message_box.add_msg(
             f"Alarms sounded.", self.game_data.colors["SYS_MSG"]
         )
 
-    # What happens when successfully hacked.
     def _success_hack(self, actor_: Actor) -> None:
+        """Calls all the success functions associated with this terminal."""
+
         self.game_interface.message_box.add_msg(
             f"{actor_.name} successfully hacks the terminal.", self.game_data.colors["SUCCESS_MSG"]
         )
@@ -1237,8 +1362,9 @@ class Terminal(Entity):
             if result == self.SuccessResult.UNLOCK_DOORS:
                 self._unlock_doors()
 
-    # What happens when unsuccessfully hacked.
     def _fail_hack(self, actor_: Actor) -> None:
+        """Calls all the fail functions associated with this terminal."""
+
         self.game_interface.message_box.add_msg(
             f"{actor_.name} fails to hack the terminal.", self.game_data.colors["BAD_MSG"]
         )
@@ -1247,8 +1373,9 @@ class Terminal(Entity):
             if result == self.FailResult.SOUND_ALARM:
                 self._sound_alarm()
 
-    # Called by an actor that wants to attempt to hack the terminal.
     def attempt_hack(self, actor_: Actor) -> None:
+        """Called by an actor that wants to attempt to hack the terminal."""
+
         if actor_.hacking_skill > self.difficulty:
             self._success_hack(actor_)
         else:
@@ -1256,6 +1383,8 @@ class Terminal(Entity):
 
 
 class Camera(Entity):
+    """Represents a security camera."""
+
     def __init__(
             self,
             x: int,
@@ -1286,8 +1415,10 @@ class Camera(Entity):
         self.game_entities.cameras.append(self)
 
     def update(self, game_time: int) -> None:
+        """Updates the camera."""
+
         if not self.triggered:
-            # Check if player is within FOV, if so sound alarms.
+            # Check if player is within FOV, if so sound alarms by making a lot of noise.
             # Eventually also do stealth check.
             for point in self.fov:
                 if point[0] == self.game_entities.player.x and point[1] == self.game_entities.player.y:
@@ -1298,10 +1429,12 @@ class Camera(Entity):
                     break
 
         if self.triggered:
-            self.make_noise(50)
+            self.make_noise(999)
 
 
 class Trap(Entity):
+    """Represents a trap."""
+
     def __init__(
             self,
             x: int,
@@ -1311,6 +1444,7 @@ class Trap(Entity):
             game_interface: interface.Interface
     ) -> None:
         tile: dict = game_data.tiles["TRAP"]
+
         super().__init__(
             x,
             y,
@@ -1331,6 +1465,8 @@ class Trap(Entity):
         self.game_entities.traps.append(self)
 
     def trigger(self) -> None:
+        """Triggers the trap and performs some action."""
+
         if self.triggered:
             return
 
@@ -1340,6 +1476,8 @@ class Trap(Entity):
 
 
 class Explosive(Entity):
+    """Represents an explosive on the map before and after it goes off."""
+
     def __init__(
             self,
             x: int,
@@ -1352,6 +1490,7 @@ class Explosive(Entity):
             game_interface: interface.Interface
     ) -> None:
         tile: dict = game_data.tiles["EXPLOSIVE"]
+
         super().__init__(
             x,
             y,
@@ -1372,31 +1511,41 @@ class Explosive(Entity):
         game_entities_.explosives.append(self)
 
     def explode(self) -> None:
-        actors_hit: list[Actor] = []
+        """Called after the fuse has run out and unleashes an explosion."""
 
+        actors_hit: list[Actor] = []  # Used to keep track of actors receiving damage so they don't get hit twice.
+
+        # Grows the explosion out to its max blast radius.
         for i in range(self.blast_radius + 1):
             blast_zone: list[tuple[int, int]]
             if i == 0:
+                # The explosion is directly under an actor.
                 blast_zone = [(self.x, self.y)]
             else:
                 blast_zone = self.compute_fov(i, False)
 
+            # Check each point in the blast zone to see if it hit an actor.
             for point in blast_zone:
                 actor: Actor = self.game_entities.get_actor_at(point[0], point[1])
                 if actor is not None and actor.health >= 0 and actor not in actors_hit:
                     actor.receive_hit(self, round(self.damage / (i + 1)), 100)
                     actors_hit.append(actor)
 
-            self.render_sleep(blast_zone, '*', self.game_data.colors["RED"], 0.05)
+            self.render_projectile(blast_zone, '*', self.game_data.colors["RED"], 0.05)
 
         self.remove()
 
     def update(self, game_time: int) -> None:
+        """Updates the explosive."""
+
+        # Decrease the fuse every round.
         self.fuse -= 1
         if self.fuse <= 0:
             self.explode()
 
     def remove(self) -> None:
+        """Removes the explosive from the list of all explosives."""
+
         explosives: list[Explosive] = self.game_entities.explosives
         for explosive_ in enumerate(explosives):
             if explosive_[1] is self:
