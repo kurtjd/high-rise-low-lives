@@ -5,6 +5,7 @@ import entities
 import interface
 import databases
 import game_states
+import actor
 
 
 class GameEngine:
@@ -15,7 +16,7 @@ class GameEngine:
             entities_: entities.GameEntities,
             game_interface: interface.Interface,
             game_data: databases.Databases,
-            player_: entities.Player,
+            player_: actor.Player,
             map_size: tuple[int, int]
     ) -> None:
         self.entities = entities_

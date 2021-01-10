@@ -6,6 +6,12 @@ import databases
 import game_engine
 import ai
 import items
+import actor
+import turret
+import item_entity
+import terminal
+import camera
+import trap
 
 
 # The following functions are temporary, will eventually be done procedurally.
@@ -14,7 +20,7 @@ def spawn_enemies(
         entities__: entities.GameEntities,
         game_interface_: interface.Interface
 ) -> None:
-    enemy1: entities.Actor = entities.Actor(
+    enemy1: actor.Actor = actor.Actor(
         "Rent-a-Cop",
         "Human",
         "Brawler",
@@ -46,7 +52,7 @@ def spawn_enemies(
     ))
     enemy1.attempt_wield(enemy1.inventory['a']["Item"])
 
-    enemy2: entities.Actor = entities.Actor(
+    enemy2: actor.Actor = actor.Actor(
         "Mercenary",
         "Human",
         "Gunslinger",
@@ -80,7 +86,7 @@ def spawn_enemies(
     ))
     enemy2.attempt_wield(enemy2.inventory['a']["Item"])
 
-    entities.Turret(46, 6, game_data_, entities__, game_interface_)
+    turret.Turret(46, 6, game_data_, entities__, game_interface_)
 
 
 def spawn_items(
@@ -95,7 +101,7 @@ def spawn_items(
     misc_items: dict = game_data_.misc_items
     ammo: dict = game_data_.ammo
 
-    entities.ItemEntity(
+    item_entity.ItemEntity(
         22,
         20,
         weapons["SAMURAI_SWORD"]["Name"],
@@ -117,7 +123,7 @@ def spawn_items(
         game_interface_
     )
 
-    entities.ItemEntity(
+    item_entity.ItemEntity(
         23,
         20,
         weapons["TEC9"]["Name"],
@@ -141,7 +147,7 @@ def spawn_items(
         game_interface_
     )
 
-    entities.ItemEntity(
+    item_entity.ItemEntity(
         23,
         18,
         throwables["GRENADE"]["Name"],
@@ -160,7 +166,7 @@ def spawn_items(
         game_interface_
     )
 
-    entities.ItemEntity(
+    item_entity.ItemEntity(
         21,
         18,
         drugs["STITCH"]["Name"],
@@ -177,7 +183,7 @@ def spawn_items(
         game_interface_
     )
 
-    entities.ItemEntity(
+    item_entity.ItemEntity(
         20,
         18,
         power_sources["BATTERY"]["Name"],
@@ -195,7 +201,7 @@ def spawn_items(
         game_interface_
     )
 
-    entities.ItemEntity(
+    item_entity.ItemEntity(
         20,
         19,
         misc_items["CIGARETTE"]["Name"],
@@ -208,7 +214,7 @@ def spawn_items(
         game_interface_
     )
 
-    entities.ItemEntity(
+    item_entity.ItemEntity(
         18,
         17,
         ammo["9MM_FMJ"]["Name"],
@@ -232,7 +238,7 @@ def spawn_terminals(
         entities__: entities.GameEntities,
         game_interface_: interface.Interface
 ) -> None:
-    entities.Terminal(60, 19, game_data_, entities__, game_interface_)
+    terminal.Terminal(60, 19, game_data_, entities__, game_interface_)
 
 
 def spawn_cameras(
@@ -240,8 +246,8 @@ def spawn_cameras(
         entities__: entities.GameEntities,
         game_interface_: interface.Interface
 ) -> None:
-    entities.Camera(58, 16, game_data_, entities__, game_interface_)
-    entities.Camera(30, 11, game_data_, entities__, game_interface_)
+    camera.Camera(58, 16, game_data_, entities__, game_interface_)
+    camera.Camera(30, 11, game_data_, entities__, game_interface_)
 
 
 def spawn_traps(
@@ -249,8 +255,8 @@ def spawn_traps(
         entities__: entities.GameEntities,
         game_interface_: interface.Interface
 ) -> None:
-    entities.Trap(60, 18, game_data_, entities__, game_interface_)
-    entities.Trap(33, 14, game_data_, entities__, game_interface_)
+    trap.Trap(60, 18, game_data_, entities__, game_interface_)
+    trap.Trap(33, 14, game_data_, entities__, game_interface_)
 # END TEMPORARY STUFF
 
 
@@ -280,10 +286,10 @@ def init_player(
         game_data: databases.Databases,
         entities__: entities.GameEntities,
         game_interface_: interface.Interface
-) -> entities.Player:
+) -> actor.Player:
     """Initializes the player entity."""
 
-    player_: entities.Player = entities.Player(
+    player_: actor.Player = actor.Player(
         "Hiro",
         "Human",
         "Infiltrator",
@@ -356,7 +362,7 @@ entities_.doors[1].locked = True  # Just lock an arbitrary door as a test.
 # END TEMPORARY STUFF
 
 # Init player last so they are rendered last.
-player: entities.Player = init_player(GAME_DATA, entities_, game_interface)
+player: actor.Player = init_player(GAME_DATA, entities_, game_interface)
 game_interface.stats_box.set_actor(player)
 
 # Initialize game engine.
