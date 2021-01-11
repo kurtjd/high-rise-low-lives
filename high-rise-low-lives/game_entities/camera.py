@@ -1,11 +1,11 @@
 from __future__ import annotations
-import entities
 import databases
 import interface
-import entity
+from .entities import GameEntities
+from .entity import Entity
 
 
-class Camera(entity.Entity):
+class Camera(Entity):
     """Represents a security camera."""
 
     def __init__(
@@ -13,7 +13,7 @@ class Camera(entity.Entity):
             x: int,
             y: int,
             game_data: databases.Databases,
-            game_entities_: entities.GameEntities,
+            game_entities_: GameEntities,
             game_interface: interface.Interface
     ) -> None:
         tile_: dict = game_data.tiles["CAMERA"]

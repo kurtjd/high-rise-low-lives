@@ -1,11 +1,11 @@
 from __future__ import annotations
 import databases
 import interface
-import entities
-import tile
+from .entities import GameEntities
+from .tile import Tile
 
 
-class Vent(tile.Tile):
+class Vent(Tile):
     """Represents a vent."""
 
     def __init__(
@@ -13,7 +13,7 @@ class Vent(tile.Tile):
             x: int,
             y: int,
             game_data: databases.Databases,
-            game_entities_: entities.GameEntities,
+            game_entities_: GameEntities,
             game_interface: interface.Interface,
             entrance: bool = False
     ) -> None:

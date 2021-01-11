@@ -1,20 +1,20 @@
 from __future__ import annotations
 from enum import Enum, auto
 from typing import Optional, Any, Callable
-import entities
-import entity
-import item_entity
 import databases
 import interface
 import items
-import vent
-import door
-import terminal
-import trap
-import explosive
+from .entities import GameEntities
+from .entity import Entity
+from .item_entity import ItemEntity
+from .vent import Vent
+from .door import Door
+from .terminal import Terminal
+from .trap import Trap
+from .explosive import Explosive
 
 
-class Actor(entity.Entity):
+class Actor(Entity):
     """Represents an actor (an entity that can do things)."""
 
     class Action(Enum):
@@ -53,7 +53,7 @@ class Actor(entity.Entity):
             graphic: str,
             color: tuple[int, int, int],
             game_data: databases.Databases,
-            game_entities_: entities.GameEntities,
+            game_entities_: GameEntities,
             game_interface: interface.Interface
     ) -> None:
         super().__init__(x, y, name, desc, True, graphic, color, game_data, game_entities_, game_interface)
@@ -108,7 +108,7 @@ class Actor(entity.Entity):
         self.action: Actor.Action = self.Action.NONE
         self.dest_x: int = 0
         self.dest_y: int = 0
-        self.atk_target: Optional[entity.Entity] = None
+        self.atk_target: Optional[Entity] = None
         self.bullet_path: list[tuple[int, int]] = []
 
         # Misc
@@ -222,7 +222,7 @@ class Actor(entity.Entity):
     def _open_door(self) -> None:
         """Opens a door if it's not locked or if actor has key."""
 
-        target_door: door.Door = self.game_entities.get_door_at(self.action_target_x, self.action_target_y)
+        target_door: Door = self.game_entities.get_door_at(self.action_target_x, self.action_target_y)
         if not target_door.locked:
             target_door.open()
         else:
@@ -233,13 +233,13 @@ class Actor(entity.Entity):
     def _close_door(self) -> None:
         """Actually closes the door."""
 
-        target_door: door.Door = self.game_entities.get_door_at(self.action_target_x, self.action_target_y)
+        target_door: Door = self.game_entities.get_door_at(self.action_target_x, self.action_target_y)
         target_door.close()
 
     def _hack(self) -> None:
         """Attempts to hack a terminal."""
 
-        target_terminal: terminal.Terminal = self.game_entities.get_terminal_at(
+        target_terminal: Terminal = self.game_entities.get_terminal_at(
             self.action_target_x,
             self.action_target_y
         )
@@ -272,7 +272,7 @@ class Actor(entity.Entity):
         # the chance to hit.
         prev_entity_cover: int = 0
         for point in self.bullet_path:
-            entity_at_point: entity.Entity = self.game_entities.get_top_entity_at(point[0], point[1])
+            entity_at_point: Entity = self.game_entities.get_top_entity_at(point[0], point[1])
             if isinstance(entity_at_point, Actor) and entity_at_point.health > 0:
                 entity_at_point.receive_hit(self, self.atk_dmg, 100 - prev_entity_cover, True)
                 return
@@ -301,7 +301,7 @@ class Actor(entity.Entity):
             x = self.x
             y = self.y
         else:
-            entity_at_end: entity.Entity = self.game_entities.get_top_entity_at(
+            entity_at_end: Entity = self.game_entities.get_top_entity_at(
                 self.bullet_path[-1][0],
                 self.bullet_path[-1][1]
             )
@@ -321,7 +321,7 @@ class Actor(entity.Entity):
 
         if isinstance(self.throwing, items.Grenade):
             # Create a new explosive on the target grid cell.
-            explosive.Explosive(
+            Explosive(
                 x,
                 y,
                 self.throwing.damage,
@@ -407,7 +407,7 @@ class Actor(entity.Entity):
 
         # Get all items at target and ask which to pick-up
         # For now just pick up first item
-        items_: list[item_entity.ItemEntity] = self.game_entities.get_items_at(
+        items_: list[ItemEntity] = self.game_entities.get_items_at(
             self.action_target_x,
             self.action_target_y
         )
@@ -452,7 +452,13 @@ class Actor(entity.Entity):
 
         return total_amount
 
-    def receive_hit(self, src_entity: entity.Entity, atk_dmg: int, hit_chance: int, ranged: bool = False) -> None:
+    def receive_hit(
+            self,
+            src_entity: Entity,
+            atk_dmg: int,
+            hit_chance: int,
+            ranged: bool = False
+    ) -> None:
         """Called by anything that wants to damage this actor."""
 
         # Eventually do a bunch of calculations to see if hit actually lands.
@@ -485,7 +491,7 @@ class Actor(entity.Entity):
                     hit_msg = (
                         f"{src_entity.name} pummels {self.name} with his fists for {atk_dmg} damage!"
                     )
-            elif isinstance(src_entity, explosive.Explosive):
+            elif isinstance(src_entity, Explosive):
                 hit_msg = f"{self.name} is caught in an explosion and receives {atk_dmg} damage!"
             else:
                 hit_msg = "LOL"
@@ -495,7 +501,7 @@ class Actor(entity.Entity):
                     hit_msg = f"{src_entity.name} executes {self.name}."
                 else:
                     hit_msg = f"{src_entity.name} guts {self.name}."
-            elif isinstance(src_entity, explosive.Explosive):
+            elif isinstance(src_entity, Explosive):
                 hit_msg = f"An explosive turns {self.name} into a thick red paste."
             else:
                 hit_msg = "LOL"
@@ -561,19 +567,19 @@ class Actor(entity.Entity):
         # We want to check what entites are occupying the move destination if not in the vents.
         # Do different things depending on what's there.
         if not self.in_vents:
-            dest_entities: list[entity.Entity] = self.game_entities.get_all_at(new_x, new_y)
+            dest_entities: list[Entity] = self.game_entities.get_all_at(new_x, new_y)
             for dest_entity in dest_entities:
                 # Check to see if destination has an Actor, if so perform melee attack
                 if isinstance(dest_entity, Actor) and dest_entity.health > 0:
                     self.attempt_atk(new_x, new_y)
                     return True
-                elif isinstance(dest_entity, door.Door) and not dest_entity.opened:
+                elif isinstance(dest_entity, Door) and not dest_entity.opened:
                     self._do_action(self.Action.OPEN_DOOR, self.gen_speed, new_x, new_y)
                     return True
-                elif isinstance(dest_entity, terminal.Terminal):
+                elif isinstance(dest_entity, Terminal):
                     self._do_action(self.Action.HACK, self.hack_speed, new_x, new_y)
                     return True
-                elif isinstance(dest_entity, vent.Vent) and not isinstance(self, Player):
+                elif isinstance(dest_entity, Vent) and not isinstance(self, Player):
                     return False  # Don't let NPCs follow player into vents
 
                 # Prevent from moving into blocked entity.
@@ -655,7 +661,7 @@ class Actor(entity.Entity):
         for x in range(-1, 2):
             for y in range(-1, 2):
                 if x != 0 or y != 0:
-                    target_door: door.Door = self.game_entities.get_door_at(self.x + x, self.y + y)
+                    target_door: Door = self.game_entities.get_door_at(self.x + x, self.y + y)
                     if target_door is not None and target_door.opened:
                         self._do_action(self.Action.CLOSE_DOOR, self.gen_speed, target_door.x, target_door.y)
                         return
@@ -710,7 +716,7 @@ class Player(Actor):
             graphic: str,
             color: tuple[int, int, int],
             game_data: databases.Databases,
-            game_entities_: entities.GameEntities,
+            game_entities_: GameEntities,
             game_interface: interface.Interface
     ) -> None:
         super().__init__(name, race, class_name, desc, x, y, health, muscle, smarts, reflexes, wits, grit,
@@ -732,7 +738,7 @@ class Player(Actor):
         super().move()
 
         # If the player moves into or out of vents, change what is visible.
-        vent_: vent.Vent = self.game_entities.get_vent_at(self.x, self.y)
+        vent_: Vent = self.game_entities.get_vent_at(self.x, self.y)
         if vent_ is not None:
             if not self.in_vents:
                 self.game_entities.show_vents()
@@ -748,7 +754,7 @@ class Player(Actor):
             self.move_speed /= self.vent_speed_multi
 
         # If the player walks onto a trap, trigger it.
-        trap_: trap.Trap = self.game_entities.get_trap_at(self.x, self.y)
+        trap_: Trap = self.game_entities.get_trap_at(self.x, self.y)
         if trap_ is not None:
             trap_.trigger()
 
@@ -760,8 +766,8 @@ class Player(Actor):
         new_y: int = self.y + y
 
         # If the player is in the vents, make it so they can't move through un-blocked entities like floors.
-        vent_to: vent.Vent = self.game_entities.get_vent_at(new_x, new_y)
-        vent_on: vent.Vent = self.game_entities.get_vent_at(self.x, self.y)
+        vent_to: Vent = self.game_entities.get_vent_at(new_x, new_y)
+        vent_on: Vent = self.game_entities.get_vent_at(self.x, self.y)
 
         if self.in_vents and vent_to is None and vent_on is not None and not vent_on.entrance:
             return False

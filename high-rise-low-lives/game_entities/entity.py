@@ -4,9 +4,9 @@ import time
 from typing import Optional, Any
 import databases
 import interface
-import entities
 import bresenham
 import rendering
+from .entities import GameEntities
 
 
 class Entity:
@@ -22,7 +22,7 @@ class Entity:
             graphic: str,
             color: Optional[tuple[int, int, int]],
             game_data: databases.Databases,
-            game_entities_: entities.GameEntities,
+            game_entities_: GameEntities,
             game_interface: interface.Interface,
             cover_percent: int = 0,
             visible: bool = True
@@ -43,7 +43,7 @@ class Entity:
 
         self.game_data: databases.Databases = game_data
         self.game_interface: interface.Interface = game_interface
-        self.game_entities: entities.GameEntities = game_entities_
+        self.game_entities: GameEntities = game_entities_
 
         game_entities_.all.append(self)
 

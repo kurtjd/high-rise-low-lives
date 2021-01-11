@@ -1,13 +1,13 @@
 from __future__ import annotations
 import databases
 import interface
-import entities
-import entity
-import actor
 import items
+from .entities import GameEntities
+from .entity import Entity
+from .actor import Actor
 
 
-class ItemEntity(entity.Entity):
+class ItemEntity(Entity):
     """Represents an item entity, not to be confused with an actual item."""
 
     def __init__(
@@ -20,7 +20,7 @@ class ItemEntity(entity.Entity):
             color: tuple[int, int, int],
             item_: items.Item,
             game_data: databases.Databases,
-            game_entities_: entities.GameEntities,
+            game_entities_: GameEntities,
             game_interface: interface.Interface
     ) -> None:
         super().__init__(x, y, name, desc, False, graphic, color, game_data, game_entities_, game_interface)
@@ -29,7 +29,7 @@ class ItemEntity(entity.Entity):
 
         game_entities_.items.append(self)
 
-    def actor_pick_up(self, actor_: actor.Actor, amount: int = 1) -> items.Item:
+    def actor_pick_up(self, actor_: Actor, amount: int = 1) -> items.Item:
         """Called when the actor picks up the item entity."""
 
         self.item.on_pick_up(actor_, amount)

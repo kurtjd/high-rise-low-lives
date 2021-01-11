@@ -4,6 +4,7 @@ Short-Term ToDo
 *Fix time showing 0 when targeting something.
 *Make separate method to determine hit message.
 *Replace dead actor with Corpse entity
+*Fix player slamming into something vent entrance.
 
 
 Mid-Term ToDo

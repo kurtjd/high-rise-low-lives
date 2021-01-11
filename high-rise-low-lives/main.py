@@ -1,26 +1,26 @@
 import tcod
-import entities
 import interface
 import map
 import databases
 import game_engine
 import ai
 import items
-import actor
-import turret
-import item_entity
-import terminal
-import camera
-import trap
+import game_entities.entities
+import game_entities.actor
+import game_entities.turret
+import game_entities.item_entity
+import game_entities.terminal
+import game_entities.camera
+import game_entities.trap
 
 
 # The following functions are temporary, will eventually be done procedurally.
 def spawn_enemies(
         game_data_: databases.Databases,
-        entities__: entities.GameEntities,
+        entities__: game_entities.entities.GameEntities,
         game_interface_: interface.Interface
 ) -> None:
-    enemy1: actor.Actor = actor.Actor(
+    enemy1: game_entities.actor.Actor = game_entities.actor.Actor(
         "Rent-a-Cop",
         "Human",
         "Brawler",
@@ -52,7 +52,7 @@ def spawn_enemies(
     ))
     enemy1.attempt_wield(enemy1.inventory['a']["Item"])
 
-    enemy2: actor.Actor = actor.Actor(
+    enemy2: game_entities.actor.Actor = game_entities.actor.Actor(
         "Mercenary",
         "Human",
         "Gunslinger",
@@ -86,12 +86,12 @@ def spawn_enemies(
     ))
     enemy2.attempt_wield(enemy2.inventory['a']["Item"])
 
-    turret.Turret(46, 6, game_data_, entities__, game_interface_)
+    game_entities.turret.Turret(46, 6, game_data_, entities__, game_interface_)
 
 
 def spawn_items(
         game_data_: databases.Databases,
-        entities__: entities.GameEntities,
+        entities__: game_entities.entities.GameEntities,
         game_interface_: interface.Interface
 ) -> None:
     weapons: dict = game_data_.weapons
@@ -101,7 +101,7 @@ def spawn_items(
     misc_items: dict = game_data_.misc_items
     ammo: dict = game_data_.ammo
 
-    item_entity.ItemEntity(
+    game_entities.item_entity.ItemEntity(
         22,
         20,
         weapons["SAMURAI_SWORD"]["Name"],
@@ -123,7 +123,7 @@ def spawn_items(
         game_interface_
     )
 
-    item_entity.ItemEntity(
+    game_entities.item_entity.ItemEntity(
         23,
         20,
         weapons["TEC9"]["Name"],
@@ -147,7 +147,7 @@ def spawn_items(
         game_interface_
     )
 
-    item_entity.ItemEntity(
+    game_entities.item_entity.ItemEntity(
         23,
         18,
         throwables["GRENADE"]["Name"],
@@ -166,7 +166,7 @@ def spawn_items(
         game_interface_
     )
 
-    item_entity.ItemEntity(
+    game_entities.item_entity.ItemEntity(
         21,
         18,
         drugs["STITCH"]["Name"],
@@ -183,7 +183,7 @@ def spawn_items(
         game_interface_
     )
 
-    item_entity.ItemEntity(
+    game_entities.item_entity.ItemEntity(
         20,
         18,
         power_sources["BATTERY"]["Name"],
@@ -201,7 +201,7 @@ def spawn_items(
         game_interface_
     )
 
-    item_entity.ItemEntity(
+    game_entities.item_entity.ItemEntity(
         20,
         19,
         misc_items["CIGARETTE"]["Name"],
@@ -214,7 +214,7 @@ def spawn_items(
         game_interface_
     )
 
-    item_entity.ItemEntity(
+    game_entities.item_entity.ItemEntity(
         18,
         17,
         ammo["9MM_FMJ"]["Name"],
@@ -235,28 +235,28 @@ def spawn_items(
 
 def spawn_terminals(
         game_data_: databases.Databases,
-        entities__: entities.GameEntities,
+        entities__: game_entities.entities.GameEntities,
         game_interface_: interface.Interface
 ) -> None:
-    terminal.Terminal(60, 19, game_data_, entities__, game_interface_)
+    game_entities.terminal.Terminal(60, 19, game_data_, entities__, game_interface_)
 
 
 def spawn_cameras(
         game_data_: databases.Databases,
-        entities__: entities.GameEntities,
+        entities__: game_entities.entities.GameEntities,
         game_interface_: interface.Interface
 ) -> None:
-    camera.Camera(58, 16, game_data_, entities__, game_interface_)
-    camera.Camera(30, 11, game_data_, entities__, game_interface_)
+    game_entities.camera.Camera(58, 16, game_data_, entities__, game_interface_)
+    game_entities.camera.Camera(30, 11, game_data_, entities__, game_interface_)
 
 
 def spawn_traps(
         game_data_: databases.Databases,
-        entities__: entities.GameEntities,
+        entities__: game_entities.entities.GameEntities,
         game_interface_: interface.Interface
 ) -> None:
-    trap.Trap(60, 18, game_data_, entities__, game_interface_)
-    trap.Trap(33, 14, game_data_, entities__, game_interface_)
+    game_entities.trap.Trap(60, 18, game_data_, entities__, game_interface_)
+    game_entities.trap.Trap(33, 14, game_data_, entities__, game_interface_)
 # END TEMPORARY STUFF
 
 
@@ -284,12 +284,12 @@ def init_tcod() -> tuple[tcod.context.Context, tcod.Console]:
 
 def init_player(
         game_data: databases.Databases,
-        entities__: entities.GameEntities,
+        entities__: game_entities.entities.GameEntities,
         game_interface_: interface.Interface
-) -> actor.Player:
+) -> game_entities.actor.Player:
     """Initializes the player entity."""
 
-    player_: actor.Player = actor.Player(
+    player_: game_entities.actor.Player = game_entities.actor.Player(
         "Hiro",
         "Human",
         "Infiltrator",
@@ -344,7 +344,7 @@ GAME_DATA.load_from_files()
 window: tcod.context.Context
 root_console: tcod.Console
 (window, root_console) = init_tcod()
-entities_: entities.GameEntities = entities.GameEntities(window, root_console)
+entities_: game_entities.entities.GameEntities = game_entities.entities.GameEntities(window, root_console)
 game_interface: interface.Interface = init_interface(GAME_DATA)
 
 # Generate map (for now read from file, will be randomly generated)
@@ -362,7 +362,7 @@ entities_.doors[1].locked = True  # Just lock an arbitrary door as a test.
 # END TEMPORARY STUFF
 
 # Init player last so they are rendered last.
-player: actor.Player = init_player(GAME_DATA, entities_, game_interface)
+player: game_entities.actor.Player = init_player(GAME_DATA, entities_, game_interface)
 game_interface.stats_box.set_actor(player)
 
 # Initialize game engine.

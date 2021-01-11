@@ -1,11 +1,11 @@
 from __future__ import annotations
-import entities
 import interface
 import databases
-import entity
+from .entities import GameEntities
+from .entity import Entity
 
 
-class Door(entity.Entity):
+class Door(Entity):
     """Represents a door"""
 
     def __init__(
@@ -13,7 +13,7 @@ class Door(entity.Entity):
             x: int,
             y: int,
             game_data: databases.Databases,
-            game_entities_: entities.GameEntities,
+            game_entities_: GameEntities,
             game_interface: interface.Interface
     ) -> None:
         tile_: dict = game_data.tiles["DOOR_CLOSED"]

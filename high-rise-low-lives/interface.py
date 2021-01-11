@@ -1,6 +1,7 @@
+from __future__ import annotations
 from typing import Optional, Union, Any
 import rendering
-import entities
+import game_entities.actor
 
 
 class Interface:
@@ -89,7 +90,7 @@ class Interface:
         def __init__(self, x: int = 0, y: int = 0) -> None:
             super().__init__(x, y)
 
-        def render(self, surface: Any, actor_: "entities.Actor") -> None:
+        def render(self, surface: Any, actor_: game_entities.actor.Actor) -> None:
             rendering.render(
                 surface,
                 f"Inventory: {len(actor_.inventory)} / {actor_.MAX_INVENTORY_SIZE} slots",
@@ -156,7 +157,7 @@ class Interface:
             self.height: int = height
 
             # The actor whos stats appear here.
-            self.player: Optional["entities.Player"] = None
+            self.player: Optional[game_entities.actor.Player] = None
 
             self.floor: int = 1
             self.time: int = 0
@@ -164,8 +165,8 @@ class Interface:
         # ~~~ PUBLIC METHODS ~~~
 
         # Sets reference to player.
-        def set_actor(self, player_: "entities.Player") -> None:
-            self.player: "entities.Player" = player_
+        def set_actor(self, player_: game_entities.actor.Player) -> None:
+            self.player: game_entities.actor.Player = player_
 
         def update(self, time: int, floor: int) -> None:
             self.time: int = time

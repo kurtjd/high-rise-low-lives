@@ -1,58 +1,56 @@
 from __future__ import annotations
 from typing import Optional, Any
-import turret
-import entity
-import actor
-import item_entity
-import tile
-import vent
-import door
-import terminal
-import camera
-import trap
-import explosive
+import game_entities.entity
+import game_entities.actor
+import game_entities.tile
+import game_entities.item_entity
+import game_entities.camera
+import game_entities.terminal
+import game_entities.door
+import game_entities.turret
+import game_entities.explosive
 
 
-class GameEntities:
+class EntityManager:
     """Stores and manages the lists of different game entities."""
 
     def __init__(self, window: Any, surface: Any) -> None:
-        self.all: list[entity.Entity] = []
-        self.tiles: list[tile.Tile] = []
-        self.actors: list[actor.Actor] = []
-        self.turrets: list[turret.Turret] = []
-        self.doors: list[door.Door] = []
-        self.items: list[item_entity.ItemEntity] = []
-        self.terminals: list[terminal.Terminal] = []
-        self.cameras: list[camera.Camera] = []
-        self.traps: list[trap.Trap] = []
-        self.vents: list[vent.Vent] = []
-        self.explosives: list[explosive.Explosive] = []
-        self.player: Optional[actor.Player] = None
+        self.all: list[game_entities.Entity] = []
+        self.tiles: list[game_entities.Tile] = []
+        self.actors: list[game_entities.Actor] = []
+        self.turrets: list[game_entities.Turret] = []
+        self.doors: list[game_entities.Door] = []
+        self.items: list[game_entities.ItemEntity] = []
+        self.terminals: list[game_entities.Terminal] = []
+        self.cameras: list[game_entities.Camera] = []
+        self.traps: list[game_entities.Trap] = []
+        self.vents: list[game_entities.Vent] = []
+        self.explosives: list[game_entities.Explosive] = []
+        self.player: Optional[game_entities.Player] = None
 
         self.window: Any = window
         self.surface: Any = surface
 
-    def get_all_at(self, x: int, y: int) -> list[entity.Entity]:
+    def get_all_at(self, x: int, y: int) -> list[game_entities.Entity]:
         """Returns all the entities on a tile."""
 
         return [entity_ for entity_ in self.all if entity_.x == x and entity_.y == y]
 
-    def get_top_entity_at(self, x: int, y: int, ignore_invis: bool = False) -> Optional[entity.Entity]:
+    def get_top_entity_at(self, x: int, y: int, ignore_invis: bool = False) -> Optional[game_entities.Entity]:
         """Returns the top-most entity on a tile."""
 
         if not ignore_invis:
             return self.get_all_at(x, y)[-1]
         else:
             # Get the top-most entity that is visible.
-            all_: list[entity.Entity] = self.get_all_at(x, y)
+            all_: list[game_entities.Entity] = self.get_all_at(x, y)
             all_.reverse()
             for entity_ in all_:
                 if entity_.visible:
                     return entity_
             return all_[0]  # If no visible entities at position, return the top invisible one anyway.
 
-    def get_actor_at(self, x: int, y: int) -> Optional[actor.Actor]:
+    def get_actor_at(self, x: int, y: int) -> Optional[game_entities.Actor]:
         """Returns the actor on a tile if there is one."""
 
         for actor_ in self.actors:
@@ -60,7 +58,7 @@ class GameEntities:
                 return actor_
         return None
 
-    def get_door_at(self, x: int, y: int) -> Optional[door.Door]:
+    def get_door_at(self, x: int, y: int) -> Optional[game_entities.Door]:
         """Returns the door on a tile if there is one."""
 
         for door_ in self.doors:
@@ -68,12 +66,12 @@ class GameEntities:
                 return door_
         return None
 
-    def get_items_at(self, x: int, y: int) -> list[item_entity.ItemEntity]:
+    def get_items_at(self, x: int, y: int) -> list[game_entities.ItemEntity]:
         """Returns all the item entities on a tile."""
 
         return [item_ for item_ in self.items if item_.x == x and item_.y == y]
 
-    def get_terminal_at(self, x: int, y: int) -> Optional[terminal.Terminal]:
+    def get_terminal_at(self, x: int, y: int) -> Optional[game_entities.Terminal]:
         """Returns the terminal on a tile if there is one."""
 
         for terminal_ in self.terminals:
@@ -81,7 +79,7 @@ class GameEntities:
                 return terminal_
         return None
 
-    def get_trap_at(self, x: int, y: int) -> Optional[trap.Trap]:
+    def get_trap_at(self, x: int, y: int) -> Optional[game_entities.Trap]:
         """Returns the trap on a tile if there is one."""
 
         for trap_ in self.traps:
@@ -89,7 +87,7 @@ class GameEntities:
                 return trap_
         return None
 
-    def get_vent_at(self, x: int, y: int) -> Optional[vent.Vent]:
+    def get_vent_at(self, x: int, y: int) -> Optional[game_entities.Vent]:
         """Returns the vent on a tile if there is one."""
 
         for vent_ in self.vents:
@@ -148,7 +146,7 @@ class GameEntities:
         """Reveals the vents and hides everything else."""
 
         for entity_ in self.all:
-            if isinstance(entity_, vent.Vent) or isinstance(entity_, actor.Player):
+            if isinstance(entity_, game_entities.Vent) or isinstance(entity_, game_entities.Player):
                 entity_.visible = True
             else:
                 entity_.old_visible = entity_.visible  # Store the current visibility.
@@ -158,7 +156,7 @@ class GameEntities:
         """Hides the vents and reveals everything else."""
 
         for entity_ in self.all:
-            if isinstance(entity_, vent.Vent) and not entity_.entrance:
+            if isinstance(entity_, game_entities.Vent) and not entity_.entrance:
                 entity_.visible = False
             else:
                 entity_.visible = entity_.old_visible  # In case the entity was previously invisible.

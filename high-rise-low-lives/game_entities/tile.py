@@ -1,11 +1,11 @@
 from __future__ import annotations
-import entities
 import interface
 import databases
-import entity
+from .entities import GameEntities
+from .entity import Entity
 
 
-class Tile(entity.Entity):
+class Tile(Entity):
     """Represents a static tile on the game map."""
 
     def __init__(
@@ -18,7 +18,7 @@ class Tile(entity.Entity):
             graphic: str,
             color: tuple[int, int, int],
             game_data: databases.Databases,
-            game_entities_: entities.GameEntities,
+            game_entities_: GameEntities,
             game_interface: interface.Interface,
             cover_percent: int = 0,
             visible: bool = True

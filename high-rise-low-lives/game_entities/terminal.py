@@ -1,13 +1,13 @@
 from __future__ import annotations
 from enum import Enum, auto
-import entities
 import databases
 import interface
-import entity
-import actor
+from .entities import GameEntities
+from .entity import Entity
+from .actor import Actor
 
 
-class Terminal(entity.Entity):
+class Terminal(Entity):
     """ Terminals can be hacked to do things like:
          open doors, turn off security cameras, disable turrets and traps, download programs, etc
          If failed to hack, can do nasty things like sound an alarm, explode, give you a virus, etc """
@@ -30,7 +30,7 @@ class Terminal(entity.Entity):
             x: int,
             y: int,
             game_data: databases.Databases,
-            game_entities_: entities.GameEntities,
+            game_entities_: GameEntities,
             game_interface: interface.Interface
     ) -> None:
         tile_: dict = game_data.tiles["TERMINAL"]
@@ -71,7 +71,7 @@ class Terminal(entity.Entity):
             f"Alarms sounded.", self.game_data.colors["SYS_MSG"]
         )
 
-    def _success_hack(self, actor_: actor.Actor) -> None:
+    def _success_hack(self, actor_: Actor) -> None:
         """Calls all the success functions associated with this terminal."""
 
         self.game_interface.message_box.add_msg(
@@ -82,7 +82,7 @@ class Terminal(entity.Entity):
             if result == self.SuccessResult.UNLOCK_DOORS:
                 self._unlock_doors()
 
-    def _fail_hack(self, actor_: actor.Actor) -> None:
+    def _fail_hack(self, actor_: Actor) -> None:
         """Calls all the fail functions associated with this terminal."""
 
         self.game_interface.message_box.add_msg(
@@ -93,7 +93,7 @@ class Terminal(entity.Entity):
             if result == self.FailResult.SOUND_ALARM:
                 self._sound_alarm()
 
-    def attempt_hack(self, actor_: actor.Actor) -> None:
+    def attempt_hack(self, actor_: Actor) -> None:
         """Called by an actor that wants to attempt to hack the terminal."""
 
         if actor_.hacking_skill > self.difficulty:

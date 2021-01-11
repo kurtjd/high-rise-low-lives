@@ -1,10 +1,10 @@
 import databases
-import entities
 import interface
-import entity
-import tile
-import vent
-import door
+import game_entities.entities
+import game_entities.entity
+import game_entities.tile
+import game_entities.vent
+import game_entities.door
 
 
 class Map:
@@ -15,15 +15,15 @@ class Map:
     def __init__(
             self,
             game_data: databases.Databases,
-            game_entities: entities.GameEntities,
+            game_entities_: game_entities.entities.GameEntities,
             game_interface: interface.Interface
     ) -> None:
         # self.map = []
         self.game_data: databases.Databases = game_data
-        self.game_entities: entities.GameEntities = game_entities
+        self.game_entities: game_entities.entities.GameEntities = game_entities_
         self.game_interface: interface.Interface = game_interface
 
-    def _char_to_entity(self, char: str, x: int, y: int) -> entity.Entity:
+    def _char_to_entity(self, char: str, x: int, y: int) -> game_entities.entity.Entity:
         """Converts a character from a map file into a game entity."""
 
         tiles: dict = {
@@ -42,13 +42,13 @@ class Map:
         new_tile: dict = tiles.get(char, self.game_data.tiles["BLANK"])
 
         if char == '+':
-            new_entity = door.Door(x, y, self.game_data, self.game_entities, self.game_interface)
+            new_entity = game_entities.door.Door(x, y, self.game_data, self.game_entities, self.game_interface)
         elif char == ':':
-            new_entity = vent.Vent(x, y, self.game_data, self.game_entities, self.game_interface, True)
+            new_entity = game_entities.vent.Vent(x, y, self.game_data, self.game_entities, self.game_interface, True)
         elif char == '"':
-            new_entity = vent.Vent(x, y, self.game_data, self.game_entities, self.game_interface)
+            new_entity = game_entities.vent.Vent(x, y, self.game_data, self.game_entities, self.game_interface)
         else:
-            new_entity = tile.Tile(
+            new_entity = game_entities.tile.Tile(
                 x,
                 y,
                 new_tile["Name"],

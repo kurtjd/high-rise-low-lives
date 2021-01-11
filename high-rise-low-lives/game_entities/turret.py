@@ -1,12 +1,12 @@
 from __future__ import annotations
 import databases
 import interface
-import entities
-import actor
 import ai
+from .entities import GameEntities
+from .actor import Actor
 
 
-class Turret(actor.Actor):
+class Turret(Actor):
     """Represents a turret."""
 
     def __init__(
@@ -14,7 +14,7 @@ class Turret(actor.Actor):
             x: int,
             y: int,
             game_data: databases.Databases,
-            game_entities_: entities.GameEntities,
+            game_entities_: GameEntities,
             game_interface: interface.Interface
     ):
         self.turret_data: dict = game_data.npcs["TURRET"]

@@ -1,12 +1,12 @@
 from __future__ import annotations
-import entities
 import databases
 import interface
-import entity
-import actor
+from .entities import GameEntities
+from .entity import Entity
+from .actor import Actor
 
 
-class Explosive(entity.Entity):
+class Explosive(Entity):
     """Represents an explosive on the map before and after it goes off."""
 
     def __init__(
@@ -17,7 +17,7 @@ class Explosive(entity.Entity):
             blast_radius: int,
             fuse: int,
             game_data: databases.Databases,
-            game_entities_: entities.GameEntities,
+            game_entities_: GameEntities,
             game_interface: interface.Interface
     ) -> None:
         tile_: dict = game_data.tiles["EXPLOSIVE"]
@@ -44,7 +44,8 @@ class Explosive(entity.Entity):
     def explode(self) -> None:
         """Called after the fuse has run out and unleashes an explosion."""
 
-        actors_hit: list[actor.Actor] = []  # Used to keep track of actors receiving damage so they don't get hit twice.
+        # Used to keep track of actors receiving damage so they don't get hit twice.
+        actors_hit: list[Actor] = []
 
         # Grows the explosion out to its max blast radius.
         for i in range(self.blast_radius + 1):
@@ -57,7 +58,7 @@ class Explosive(entity.Entity):
 
             # Check each point in the blast zone to see if it hit an actor.
             for point in blast_zone:
-                actor_: actor.Actor = self.game_entities.get_actor_at(point[0], point[1])
+                actor_: Actor = self.game_entities.get_actor_at(point[0], point[1])
                 if actor_ is not None and actor_.health >= 0 and actor_ not in actors_hit:
                     actor_.receive_hit(self, round(self.damage / (i + 1)), 100)
                     actors_hit.append(actor_)

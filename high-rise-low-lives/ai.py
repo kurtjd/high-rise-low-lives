@@ -1,15 +1,15 @@
 from __future__ import annotations
-import actor
+import game_entities.actor
 
 
-def smart_melee(src_actor: actor.Actor, game_actors: list[actor.Actor]) -> None:
+def smart_melee(src_actor: game_entities.actor.Actor, game_actors: list[game_entities.actor.Actor]) -> None:
     """ For intelligent actors that like to fight up-close and personal.
     This is basic, temporary AI. """
 
     # If not currently targeting an actor, find the player for now.
     if src_actor.atk_target is None:
         for entity in game_actors:
-            if isinstance(entity, actor.Player):
+            if isinstance(entity, game_entities.actor.Player):
                 src_actor.atk_target = entity
                 break
 
@@ -33,14 +33,14 @@ def smart_melee(src_actor: actor.Actor, game_actors: list[actor.Actor]) -> None:
             src_actor.attempt_move(1, 0)
 
 
-def smart_ranged(src_actor: actor.Actor, game_actors: list[actor.Actor]) -> None:
+def smart_ranged(src_actor: game_entities.actor.Actor, game_actors: list[game_entities.actor.Actor]) -> None:
     """ For intelligent actors that like to fight from a distance.
     This is basic, temporary AI. """
 
     # If not currently targeting an actor, find the player for now.
     if src_actor.atk_target is None:
         for entity in game_actors:
-            if isinstance(entity, actor.Player):
+            if isinstance(entity, game_entities.actor.Player):
                 src_actor.atk_target = entity
                 break
 
@@ -70,14 +70,14 @@ def smart_ranged(src_actor: actor.Actor, game_actors: list[actor.Actor]) -> None
         src_actor.attempt_rest()
 
 
-def turret(src_actor: actor.Actor, game_actors: list[actor.Actor]) -> None:
+def turret(src_actor: game_entities.actor.Actor, game_actors: list[game_entities.actor.Actor]) -> None:
     """ For all stationary turrets.
     This is basic, temporary AI. """
 
     # If not currently targeting an actor, find the player for now.
     if src_actor.atk_target is None:
         for entity in game_actors:
-            if isinstance(entity, actor.Player):
+            if isinstance(entity, game_entities.actor.Player):
                 src_actor.atk_target = entity
                 break
 

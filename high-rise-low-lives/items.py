@@ -1,5 +1,6 @@
+from __future__ import annotations
 from typing import Callable, Optional
-import entities
+import game_entities.actor
 import drug_effects
 
 
@@ -12,7 +13,7 @@ class Item:
         self.name: str = name
         self.desc: str = desc
 
-    def on_pick_up(self, src_actor: "entities.Actor", amount: int = 1):
+    def on_pick_up(self, src_actor: game_entities.actor.Actor, amount: int = 1):
         """Called when the item is picked up by an actor."""
 
         src_actor.add_inventory(self, amount)
@@ -101,7 +102,7 @@ class Cigarette(Item):
     def __init__(self, name: str, desc: str) -> None:
         super().__init__(name, desc)
 
-    def on_pick_up(self, src_actor: "entities.Actor", amount: int = 1):
+    def on_pick_up(self, src_actor: game_entities.actor.Actor, amount: int = 1):
         """Instead of adding to the inventory, picking up a cigarette just increases the player's total."""
 
         src_actor.smokes += amount

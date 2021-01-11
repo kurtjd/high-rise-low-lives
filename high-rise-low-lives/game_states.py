@@ -1,6 +1,7 @@
+from __future__ import annotations
 from typing import Any, Union, Optional
 import game_engine
-import entities
+import game_entities.entity
 import rendering
 import input
 
@@ -8,7 +9,7 @@ import input
 class BaseState:
     """Common functionality of all states."""
 
-    def __init__(self, engine: "game_engine.GameEngine") -> None:
+    def __init__(self, engine: game_engine.GameEngine) -> None:
         self.engine = engine
 
     def enter(self) -> None:
@@ -40,7 +41,7 @@ class BaseState:
 class PlayingState(BaseState):
     """The state when the player is actually playing the game."""
 
-    def __init__(self, engine: "game_engine.GameEngine") -> None:
+    def __init__(self, engine: game_engine.GameEngine) -> None:
         super().__init__(engine)
 
         self.game_time: int = 0
@@ -101,7 +102,7 @@ class PlayingState(BaseState):
 class WieldScreenState(BaseState):
     """The state where the player is in the wield menu."""
 
-    def __init__(self, engine: "game_engine.GameEngine") -> None:
+    def __init__(self, engine: game_engine.GameEngine) -> None:
         super().__init__(engine)
 
     def handle_rendering(self, surface: Any) -> None:
@@ -127,7 +128,7 @@ class WieldScreenState(BaseState):
 class InventoryScreenState(BaseState):
     """The state when the player is viewing inventory."""
 
-    def __init__(self, engine: "game_engine.GameEngine") -> None:
+    def __init__(self, engine: game_engine.GameEngine) -> None:
         super().__init__(engine)
 
     def handle_rendering(self, surface: Any) -> None:
@@ -148,7 +149,7 @@ class InventoryScreenState(BaseState):
 class ThrowScreenState(BaseState):
     """The state when the player is selecting something to throw."""
 
-    def __init__(self, engine: "game_engine.GameEngine") -> None:
+    def __init__(self, engine: game_engine.GameEngine) -> None:
         super().__init__(engine)
 
     def handle_rendering(self, surface: Any) -> None:
@@ -169,7 +170,7 @@ class ThrowScreenState(BaseState):
 class DescScreenState(BaseState):
     """The state when the player is viewing the description of something."""
 
-    def __init__(self, engine: "game_engine.GameEngine") -> None:
+    def __init__(self, engine: game_engine.GameEngine) -> None:
         super().__init__(engine)
 
     def handle_rendering(self, surface: Any) -> None:
@@ -181,7 +182,7 @@ class DescScreenState(BaseState):
 class DrugScreenState(BaseState):
     """The state when the player is selecting a drug to use."""
 
-    def __init__(self, engine: "game_engine.GameEngine") -> None:
+    def __init__(self, engine: game_engine.GameEngine) -> None:
         super().__init__(engine)
 
     def handle_rendering(self, surface: Any) -> None:
@@ -202,7 +203,7 @@ class DrugScreenState(BaseState):
 class ChargeScreenState(BaseState):
     """The state when the player is selecting something to charge up with."""
 
-    def __init__(self, engine: "game_engine.GameEngine") -> None:
+    def __init__(self, engine: game_engine.GameEngine) -> None:
         super().__init__(engine)
 
     def handle_rendering(self, surface: Any) -> None:
@@ -223,7 +224,7 @@ class ChargeScreenState(BaseState):
 class SelectState(PlayingState):
     """The state when the player is selecting something on the map while playing."""
 
-    def __init__(self, engine: "game_engine.GameEngine") -> None:
+    def __init__(self, engine: game_engine.GameEngine) -> None:
         super().__init__(engine)
 
         # The location the player has his cursor over.
@@ -233,7 +234,8 @@ class SelectState(PlayingState):
     def _highlight_entity(self, color: Optional[tuple[int, int, int]]) -> None:
         """Sets the background color of a selected entity in order to 'highlight' it."""
 
-        top_entity: entities.Entity = self.engine.entities.get_top_entity_at(self.select_x, self.select_y, True)
+        top_entity: game_entities.entity.Entity = self.engine.entities.get_top_entity_at(self.select_x,
+                                                                                         self.select_y, True)
         top_entity.highlight(color)
 
     def enter(self) -> None:
@@ -288,7 +290,7 @@ class SelectState(PlayingState):
 class ExamineState(SelectState):
     """The state when the player is selecting something to examine while playing."""
 
-    def __init__(self, engine: "game_engine.GameEngine") -> None:
+    def __init__(self, engine: game_engine.GameEngine) -> None:
         super().__init__(engine)
 
     def handle_input(self, key: Union[input.Key, str]) -> None:
@@ -305,7 +307,7 @@ class ExamineState(SelectState):
 class SelectTargetState(SelectState):
     """The state when the player is selecting something to attack with a ranged or thrown weapon."""
 
-    def __init__(self, engine: "game_engine.GameEngine") -> None:
+    def __init__(self, engine: game_engine.GameEngine) -> None:
         super().__init__(engine)
 
     def update_bullet_path(self, extend: bool = False) -> None:
@@ -347,7 +349,7 @@ class SelectTargetState(SelectState):
 class SelectThrowState(SelectTargetState):
     """The state when the player is selecting a target to throw an item at."""
 
-    def __init__(self, engine: "game_engine.GameEngine") -> None:
+    def __init__(self, engine: game_engine.GameEngine) -> None:
         super().__init__(engine)
 
     def handle_input(self, key: Union[input.Key, str]) -> None:

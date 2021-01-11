@@ -1,11 +1,12 @@
+from __future__ import annotations
 from typing import Any
 import rendering
 import input
-import entities
+import game_entities.entities
+import game_entities.actor
 import interface
 import databases
 import game_states
-import actor
 
 
 class GameEngine:
@@ -13,10 +14,10 @@ class GameEngine:
 
     def __init__(
             self,
-            entities_: entities.GameEntities,
+            entities_: game_entities.entities.GameEntities,
             game_interface: interface.Interface,
             game_data: databases.Databases,
-            player_: actor.Player,
+            player_: game_entities.actor.Player,
             map_size: tuple[int, int]
     ) -> None:
         self.entities = entities_
@@ -41,7 +42,7 @@ class GameEngine:
         self.MAP_WIDTH: int = map_size[0]
         self.MAP_HEIGHT: int = map_size[1]
 
-    def set_state(self, new_state: "game_states.BaseState") -> None:
+    def set_state(self, new_state: game_states.BaseState) -> None:
         """Sets the state the game is in."""
 
         self.state.exit()
