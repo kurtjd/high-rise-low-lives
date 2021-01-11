@@ -1,0 +1,9 @@
+{
+	"BATTERY":
+	{
+		"Name": "Battery",
+		"Description": "Enough juice here to power a Gameboy!",
+		"Charge Held": 20,
+		"Discharge Time": 1000
+	}
+}

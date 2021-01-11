@@ -1,0 +1,48 @@
+{
+	"COMBAT_KNIFE": 
+	{
+		"Name": "Combat Knife",
+		"Description": "Perfect for quick and gruesome kills.",
+		"Damage": 25,
+		"Speed": 1,
+		"Accuracy": 1,
+		"Distance": "MELEE",
+		"Type": "BLADED",
+		"Hands": 1
+	},
+	"BATON":
+	{
+    		"Name": "Baton",
+    		"Description": "Greatly effective at suppressing the population.",
+    		"Damage": 10,
+    		"Speed": 0,
+    		"Accuracy": 1,
+		"Distance": "MELEE",
+		"Type": "BLUNT",
+		"Hands": 1
+	},
+	"SAMURAI_SWORD":
+	{
+    		"Name": "Samurai Sword",
+    		"Description": "The choice of weapon for pizza deliverators around the globe.",
+    		"Damage": 30,
+    		"Speed": 0,
+    		"Accuracy": 0,
+		"Distance": "MELEE",
+		"Type": "BLADED",
+		"Hands": 1
+	},
+	"TEC9":
+	{
+    		"Name": "Tec-9",
+    		"Description": "Good for putting lots of holes in a target quickly.",
+    		"Damage": 25,
+    		"Speed": 0,
+    		"Accuracy": 0,
+		"Distance": "RANGED",
+		"Type": "PISTOL",
+		"Hands": 1,
+		"Caliber": "9MM",
+		"Mag Capacity": 32
+	}
+}
