@@ -1,9 +1,0 @@
-{
-	"CIGARETTE":
-	{
-		"Name": "Cigarette",
-		"Description": "Due to most tobacco being destroyed years ago, cigarettes have become a popular currency on the black market.",
-		"Graphic": "$",
-		"Color": [218, 165, 32]
-	}
-}
