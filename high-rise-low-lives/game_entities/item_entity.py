@@ -2,7 +2,6 @@ from __future__ import annotations
 import databases
 import interface
 import items
-from .entities import GameEntities
 from .entity import Entity
 from .actor import Actor
 

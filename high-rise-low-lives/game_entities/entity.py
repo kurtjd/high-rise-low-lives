@@ -1,12 +1,11 @@
 from __future__ import annotations
+from typing import Optional, Any
 import math
 import time
-from typing import Optional, Any
 import databases
 import interface
 import bresenham
 import rendering
-from .entities import GameEntities
 
 
 class Entity:
